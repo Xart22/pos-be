@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class CategoriController extends Controller
 {
@@ -15,10 +16,27 @@ class CategoriController extends Controller
     }
     public function store(Request $request)
     {
-        $category = new Category();
-        $category->name = $request->name;
-        $category->save();
-        return response()->json($category);
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255|unique:categories'
+            ]);
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 400);
+            }
+            $data = Category::create($request->except('_token'));
+            return response()->json([
+                'message' => 'Category created',
+                'data' => $data
+
+            ]);
+        } catch (\Exception $e) {
+            if (str_contains($e->getMessage(), 'Integrity constraint violation: 1062 Duplicate entry')) {
+                return response()->json([
+                    'message' => 'Data already exists'
+                ]);
+            }
+            return response()->json($e->getMessage());
+        }
     }
     public function show($id)
     {

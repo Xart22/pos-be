@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('variants', function (Blueprint $table) {
+        Schema::create('variant_categories', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
-            $table->bigInteger('price');
-            $table->bigInteger('stock');
+            $table->string('name');
             $table->boolean('is_active')->default(true);
-            $table->bigInteger('menu_id')->references('id')->on('menus')->onDelete('cascade');
+            $table->integer('rules_min')->default(0);
+            $table->integer('rules_max')->default(0);
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('variants');
+        Schema::dropIfExists('variant_categories');
     }
 };

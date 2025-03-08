@@ -13,13 +13,15 @@ return new class extends Migration
     {
         Schema::create('menus', function (Blueprint $table) {
             $table->id();
-            $table->integer('category_id')->references('id')->on('categories')->onDelete('cascade');
+            $table->integer('category_id')->references('id')->on('categories')->onDelete('cascade')->nullable();
+            $table->integer('variant_category_id')->references('id')->on('variant_categories')->onDelete('cascade')->nullable();
             $table->string('name')->unique();
             $table->bigInteger('price');
             $table->string('description');
             $table->string('image');
             $table->integer('stock');
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_online')->default(false);
             $table->timestamps();
         });
     }
