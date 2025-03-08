@@ -17,8 +17,7 @@ return new class extends Migration
             $table->bigInteger('price');
             $table->bigInteger('stock');
             $table->boolean('is_active')->default(true);
-            $table->bigInteger('menu_id');
-            $table->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');
+            $table->bigInteger('menu_id')->references('id')->on('menus')->onDelete('cascade');
             $table->timestamps();
         });
     }

@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::create('menus', function (Blueprint $table) {
             $table->id();
-            $table->integer('category_id');
-            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
+            $table->integer('category_id')->references('id')->on('categories')->onDelete('cascade');
             $table->string('name')->unique();
             $table->bigInteger('price');
             $table->string('description');
