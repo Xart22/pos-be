@@ -33,9 +33,9 @@ class CategoriController extends Controller
             if (str_contains($e->getMessage(), 'Integrity constraint violation: 1062 Duplicate entry')) {
                 return response()->json([
                     'message' => 'Data already exists'
-                ]);
+                ], 400);
             }
-            return response()->json($e->getMessage());
+            return response()->json($e->getMessage(), 500);
         }
     }
     public function show($id)

@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('variants', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->bigInteger('price');
-            $table->bigInteger('stock');
+            $table->integer('rules_min')->default(0);
+            $table->integer('rules_max')->default(0);
             $table->timestamps();
         });
     }
