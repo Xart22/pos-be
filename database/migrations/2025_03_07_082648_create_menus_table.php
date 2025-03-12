@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('menus', function (Blueprint $table) {
             $table->id();
             $table->integer('category_id')->references('id')->on('categories')->onDelete('cascade')->nullable();
-            $table->integer('variant_category_id')->references('id')->on('variant_categories')->onDelete('cascade')->nullable();
             $table->string('name')->unique();
             $table->bigInteger('price');
             $table->string('description');
