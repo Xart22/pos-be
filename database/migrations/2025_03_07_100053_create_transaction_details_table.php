@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('transaction_details', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('transaction_id')->foreign('transaction_id')->references('id')->on('transactions')->onDelete('cascade');
-            $table->bigInteger('menu_id')->foreign('menu_id')->references('id')->on('menus')->onDelete('cascade');
+            $table->foreignId('transaction_id')->constrained('transactions')->onDelete('cascade');
+            $table->foreignId('menu_id')->constrained('menus')->onDelete('cascade');
             $table->integer('quantity');
             $table->longText('note')->nullable();
             $table->timestamps();

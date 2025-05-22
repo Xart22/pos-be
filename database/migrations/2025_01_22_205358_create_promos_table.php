@@ -11,16 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('menus', function (Blueprint $table) {
+        Schema::create('promos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
-            $table->string('name')->unique();
-            $table->bigInteger('price');
-            $table->string('description');
-            $table->string('image');
-            $table->integer('stock');
+            $table->string('name');
+            $table->string('code')->unique();
+            $table->string('type');
+            $table->bigInteger('value');
+            $table->bigInteger('min_transaction')->nullable();
+            $table->bigInteger('max_discount')->nullable();
+            $table->date('start_date');
+            $table->date('end_date');
             $table->boolean('is_active')->default(true);
-            $table->boolean('is_online')->default(false);
             $table->timestamps();
         });
     }
@@ -30,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('menus');
+        Schema::dropIfExists('promos');
     }
 };

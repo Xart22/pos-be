@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('menu_options', function (Blueprint $table) {
             $table->id();
-            $table->integer('menu_id')->references('id')->on('menus')->onDelete('cascade');
-            $table->integer('variant_id')->references('id')->on('variants')->onDelete('cascade');
+            $table->foreignId('menu_id')->constrained('menus')->onDelete('cascade');
+            $table->foreignId('variant_id')->constrained('variants')->onDelete('cascade');
             $table->timestamps();
         });
     }

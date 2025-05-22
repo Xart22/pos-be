@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transaction_detail_variants', function (Blueprint $table) {
-            $table->bigInteger('transaction_detail_id')->foreign('transaction_detail_id')->references('id')->on('transaction_details')->onDelete('cascade');
-            $table->bigInteger('variant_id')->foreign('variant_id')->references('id')->on('variants')->onDelete('cascade');
+            $table->foreignId('transaction_detail_id')->constrained('transaction_details')->onDelete('cascade');
+            $table->foreignId('variant_option_id')->constrained('variant_options')->onDelete('cascade');
             $table->timestamps();
         });
     }

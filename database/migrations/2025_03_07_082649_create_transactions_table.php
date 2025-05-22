@@ -13,13 +13,16 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('invoice')->unique();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('promo_id')->nullable()->constrained('promos')->onDelete('cascade');
             $table->enum('type', ['DINE_IN', 'TAKE_AWAY', 'GOFOOD', 'GRABFOOD', 'SHOPPEFOOD']);
             $table->enum('status', ['PROCESS', 'READY', 'CANCEL']);
             $table->integer('table_number')->nullable();
             $table->string('customer_name');
             $table->bigInteger('cash')->nullable();
             $table->bigInteger('change')->nullable();
+            $table->bigInteger('discount')->nullable();
             $table->bigInteger('total_price')->nullable();
             $table->enum('payment_method', ['CASH', 'TRANSFER', 'QRIS']);
             $table->string('payment_status')->nullable();

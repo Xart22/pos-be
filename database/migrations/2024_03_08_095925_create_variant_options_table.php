@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('variant_options', function (Blueprint $table) {
             $table->id();
-            $table->integer('variant_id')->references('id')->on('variants')->onDelete('cascade');
+            $table->foreignId('variant_id')->constrained('variants')->onDelete('cascade');
             $table->string('name');
             $table->bigInteger('price');
             $table->timestamps();
