@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\CategoriController;
+use App\Http\Controllers\API\MenuController;
 use App\Http\Controllers\API\VariantController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -22,4 +23,9 @@ Route::prefix('/variants')->group(function () {
     Route::post('/store', [VariantController::class, 'store']);
     Route::post('/update/{id}', [VariantController::class, 'update']);
     Route::delete('/delete/{id}', [VariantController::class, 'destroy']);
+});
+
+
+Route::prefix('/menu')->group(function () {
+    Route::get('/', [MenuController::class, 'index']);
 });
