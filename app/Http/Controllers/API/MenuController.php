@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Menu;
+use Illuminate\Container\Attributes\Storage;
 use Illuminate\Http\Request;
 
 class MenuController extends Controller
@@ -19,6 +20,13 @@ class MenuController extends Controller
     public function store(Request $request)
     {
         try {
+            //store image
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $filename = time() . '.' . $file->getClientOriginalExtension();
+                $file->storeAs('public/images', $filename);
+                $request->merge(['image' => 'storage/images/' . $filename]);
+            }
             $data = Menu::create($request->except('_token'));
             return response()->json([
                 'message' => 'Menu created',
