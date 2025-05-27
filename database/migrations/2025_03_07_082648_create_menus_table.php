@@ -18,6 +18,7 @@ return new class extends Migration
             $table->bigInteger('price');
             $table->string('description');
             $table->string('image');
+            $table->string('image_local');
             $table->integer('stock');
             $table->boolean('is_active')->default(true);
             $table->boolean('is_online')->default(false);
