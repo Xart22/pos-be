@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('description');
             $table->string('image');
             $table->string('image_local');
-            $table->integer('stock');
+            $table->integer('stock')->default(0);
             $table->boolean('is_active')->default(true);
             $table->boolean('is_online')->default(false);
             $table->timestamps();
