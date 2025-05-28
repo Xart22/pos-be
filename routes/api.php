@@ -30,6 +30,7 @@ Route::prefix('/variants')->group(function () {
 Route::prefix('/menu')->group(function () {
     Route::get('/', [MenuController::class, 'index']);
     Route::post('/store', [MenuController::class, 'store']);
+    Route::post('/update/{id}', [MenuController::class, 'update']);
 });
 
 Route::prefix('/settings')->group(function () {

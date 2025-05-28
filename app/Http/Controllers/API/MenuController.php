@@ -13,7 +13,10 @@ class MenuController extends Controller
     {
         $menu = Menu::all();
 
-        return response()->json($menu);
+        return response()->json([
+            'message' => 'Menu retrieved successfully',
+            'menu' => $menu
+        ]);
     }
 
 
@@ -23,16 +26,24 @@ class MenuController extends Controller
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $filename = time() . '.' . $file->getClientOriginalExtension();
-                Storage::disk('local')->putFileAs('images/menu', $file, $filename);
-                $request->merge([
-                    'image' => 'images/menu/' . $filename,
-                ]);
+                $path = $file->storeAs('public/images/menu', $filename);
+                $dbPath = str_replace('public/', 'storage/', $path);
+                $request->merge(['image' => $dbPath]);
             }
-
-            $data = Menu::create($request->except('_token'));
+            $data = Menu::create([
+                'category_id' => $request->input('category_id'),
+                'name' => $request->input('name'),
+                'price' => $request->input('price'),
+                'description' => $request->input('description'),
+                'image' => $request->input('image'),
+                'image_local' => $request->input('image_local'),
+                'stock' => $request->input('stock', 0),
+                'is_active' => $request->input('is_active', true),
+                'is_online' => $request->input('is_online', false),
+            ]);
             return response()->json([
                 'message' => 'Menu created',
-                'data' => $data
+                'menu' => $data
             ]);
         } catch (\Exception $e) {
             if ($request->hasFile('image')) {
@@ -45,11 +56,30 @@ class MenuController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $filename = time() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('public/images/menu', $filename);
+                $dbPath = str_replace('public/', 'storage/', $path);
+                $request->merge(['image' => $dbPath]);
+            }
+
             $menu = Menu::findOrFail($id);
-            $menu->update($request->except('_token'));
+            $menu->update([
+                'category_id' => $request->input('category_id'),
+                'name' => $request->input('name'),
+                'price' => $request->input('price'),
+                'description' => $request->input('description'),
+                'image' => $request->input('image', $menu->image),
+                'image_local' => $request->input('image_local', $menu->image_local),
+                'stock' => $request->input('stock', 0),
+                'is_active' => $request->input('is_active', true),
+                'is_online' => $request->input('is_online', false),
+            ]);
+            $menu->save();
             return response()->json([
                 'message' => 'Menu updated',
-                'data' => $menu
+                'menu' => $menu
             ]);
         } catch (\Exception $e) {
             return response()->json($e->getMessage(), 500);
