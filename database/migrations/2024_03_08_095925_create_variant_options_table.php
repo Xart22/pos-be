@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('variant_id')->constrained('variants')->onDelete('cascade');
             $table->string('name');
             $table->bigInteger('price');
+            $table->integer('position')->default(0);
             $table->timestamps();
         });
     }

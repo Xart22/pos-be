@@ -15,6 +15,6 @@ class Variant extends Model
 
     public function options()
     {
-        return $this->hasMany(VariantOption::class);
+        return $this->hasMany(VariantOption::class)->orderBy('position');
     }
 }

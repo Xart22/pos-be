@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Variant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class VariantController extends Controller
@@ -12,7 +13,10 @@ class VariantController extends Controller
     public function index()
     {
         $variants = Variant::all();
-        return response()->json($variants);
+        return response()->json([
+            'message' => 'Variants retrieved successfully',
+            'variants' => $variants
+        ]);
     }
 
     public function store(Request $request)
@@ -25,13 +29,16 @@ class VariantController extends Controller
             if ($validator->fails()) {
                 return response()->json($validator->errors(), 400);
             }
+
+            DB::beginTransaction();
             $data = Variant::create($request->except('_token', 'options'));
             $data->options()->createMany($request->options);
+            DB::commit();
             return response()->json([
                 'message' => 'Variant created',
-
             ]);
         } catch (\Exception $e) {
+            DB::rollBack();
             if (str_contains($e->getMessage(), 'Integrity constraint violation: 1062 Duplicate entry')) {
                 return response()->json([
                     'message' => 'Data already exists'
