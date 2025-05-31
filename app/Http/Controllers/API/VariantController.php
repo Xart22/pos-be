@@ -56,8 +56,26 @@ class VariantController extends Controller
 
     public function update(Request $request, $id)
     {
+        $validator = Validator::make($request->all(), [
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:variants,name,' . $id
+            ],
+            'options' => 'required|array|min:2'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
         $variant = Variant::find($id);
         $variant->name = $request->name;
+        $variant->rules_min = $request->rules_min;
+        $variant->rules_max = $request->rules_max;
+        $variant->options()->delete();
+        $variant->options()->createMany($request->options);
         $variant->save();
         return response()->json($variant);
     }
