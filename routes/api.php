@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\CategoriController;
 use App\Http\Controllers\API\MenuController;
 use App\Http\Controllers\API\SettingsController;
+use App\Http\Controllers\API\TransactionController;
 use App\Http\Controllers\API\VariantController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -38,4 +39,9 @@ Route::prefix('/settings')->group(function () {
     Route::post('/', [SettingsController::class, 'store']);
     Route::put('/', [SettingsController::class, 'update']);
     Route::delete('/delete/{id}', [SettingsController::class, 'destroy']);
+});
+
+
+Route::prefix('/transactions')->group(function () {
+    Route::post('/process', [TransactionController::class, 'processTransaction']);
 });
