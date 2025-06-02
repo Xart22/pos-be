@@ -4,7 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Menu;
+use App\Models\MenuOption;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class MenuController extends Controller
@@ -30,6 +32,8 @@ class MenuController extends Controller
                 $dbPath = str_replace('public/', 'storage/', $path);
                 $request->merge(['image' => $dbPath]);
             }
+
+            DB::beginTransaction();
             $data = Menu::create([
                 'category_id' => $request->input('category_id'),
                 'name' => $request->input('name'),
@@ -41,11 +45,27 @@ class MenuController extends Controller
                 'is_active' => $request->input('is_active', true),
                 'is_online' => $request->input('is_online', false),
             ]);
+            if ($request->hasFile('image')) {
+                $data->image = $request->input('image');
+            }
+            if ($request->variants != null) {
+                $variants = json_decode($request->variants, true);
+                foreach ($variants as $variant) {
+                    MenuOption::create([
+                        'menu_id' => $data->id,
+                        'variant_id' => $variant['id'],
+                        'position' => $variant['position'],
+                    ]);
+                }
+            }
+            DB::commit();
+
             return response()->json([
                 'message' => 'Menu created',
                 'menu' => $data
             ]);
         } catch (\Exception $e) {
+            DB::rollBack();
             if ($request->hasFile('image')) {
                 Storage::disk('local')->delete($request->input('image'));
             }
@@ -64,24 +84,45 @@ class MenuController extends Controller
                 $request->merge(['image' => $dbPath]);
             }
 
+            DB::beginTransaction();
             $menu = Menu::findOrFail($id);
+
             $menu->update([
                 'category_id' => $request->input('category_id'),
                 'name' => $request->input('name'),
                 'price' => $request->input('price'),
                 'description' => $request->input('description'),
                 'image' => $request->input('image', $menu->image),
-                'image_local' => $request->input('image_local', $menu->image_local),
+                'image_local' => $request->image_local ?? $menu->image_local,
                 'stock' => $request->input('stock', 0),
                 'is_active' => $request->input('is_active', true),
                 'is_online' => $request->input('is_online', false),
             ]);
+
+
+
+            MenuOption::where('menu_id', $menu->id)->delete();
+            if ($request->variants != null) {
+                $variants = json_decode($request->variants, true);
+                foreach ($variants as $variant) {
+                    MenuOption::create([
+                        'menu_id' => $menu->id,
+                        'variant_id' => $variant['id'],
+                        'position' => $variant['position'],
+                    ]);
+                }
+            }
+            DB::commit();
             $menu->save();
             return response()->json([
                 'message' => 'Menu updated',
                 'menu' => $menu
             ]);
         } catch (\Exception $e) {
+            DB::rollBack();
+            if ($request->hasFile('image')) {
+                Storage::disk('local')->delete($request->input('image'));
+            }
             return response()->json($e->getMessage(), 500);
         }
     }

@@ -17,6 +17,6 @@ class Menu extends Model
 
     public function variants()
     {
-        return $this->hasMany(MenuOption::class, 'menu_id')->with('variant');
+        return $this->hasMany(MenuOption::class, 'menu_id')->orderBy('position')->with('variant');
     }
 }
