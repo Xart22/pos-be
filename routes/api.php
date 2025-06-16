@@ -43,5 +43,6 @@ Route::prefix('/settings')->group(function () {
 
 
 Route::prefix('/transactions')->group(function () {
+    Route::get('/order-number', [TransactionController::class, 'getOrderNumber']);
     Route::post('/process', [TransactionController::class, 'processTransaction']);
 });
