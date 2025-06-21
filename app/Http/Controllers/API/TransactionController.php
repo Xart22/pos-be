@@ -23,6 +23,14 @@ class TransactionController extends Controller
 
     public function processTransaction(Request $request)
     {
+
+        Transaction::create([
+            'invoice' => $request->input('order_number'),
+            'amount' => $request->input('amount'),
+            'status' => $request->input('status', 'pending'),
+            'user_id' => $request->input('user_id'),
+        ]);
+
         return response()->json([
             'message' => 'Transaction processed successfully',
             'data' => $request->all()
