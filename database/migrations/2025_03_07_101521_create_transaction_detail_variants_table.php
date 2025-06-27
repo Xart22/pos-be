@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('transaction_detail_variants', function (Blueprint $table) {
             $table->foreignId('transaction_detail_id')->constrained('transaction_details')->onDelete('cascade');
             $table->foreignId('variant_option_id')->constrained('variant_options')->onDelete('cascade');
+            $table->string('value');
+            $table->bigInteger('price');
             $table->timestamps();
         });
     }

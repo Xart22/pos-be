@@ -3,8 +3,13 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Menu;
 use App\Models\Transaction;
+use App\Models\TransactionDetail;
+use App\Models\TransactionDetailVariant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
@@ -12,28 +17,86 @@ class TransactionController extends Controller
     public function getOrderNumber()
     {
         $countToday = Transaction::whereDate('created_at', now())->count();
-        $countToday = str_pad($countToday + 1, 4, '0', STR_PAD_LEFT);
-        $orderNumber = 'ORD-' . strtoupper(uniqid()) . '-' . $countToday;
-
+        $countToday = str_pad($countToday + 1, 3, '0', STR_PAD_LEFT);
+        //format 250325-0001
+        $todayDate = now()->format('dmy');
+        $orderNumber = "S{$todayDate}-{$countToday}";
         return response()->json([
             'message' => 'Order number generated successfully',
             'order_number' => $orderNumber
         ]);
     }
 
+
+
     public function processTransaction(Request $request)
     {
+        try {
+            $transactions = [
+                'order_id' => $request->input('transaction_id'),
+                'user_id' => 1,
+                'promo_id' => $request->input('promo_id', null), // optional
+                'type' => $request->input('type'), // default to purchase
+                'status' => $request->input('status', 'PROCESS'), // default to pending
+                'table_number' => $request->input('table_number', null), // optional
+                'customer_name' => $request->input('customer_name', null), // optional
+                'payment_method' => $request->input('payment_method', 'CASH'),
+                'cash' => $request->input('cash', 0), // default to 0
+                'change' => $request->input('change', 0), // default to 0
+                'discount' => $request->input('discount', 0), // default to 0
+                'total_price' => $request->input('total'), // required
+                'payment_proof' => $request->input('payment_proof', null), // optional
+            ];
+            DB::beginTransaction();
+            $transactions_id = Transaction::create($transactions)->id;
 
-        Transaction::create([
-            'invoice' => $request->input('order_number'),
-            'amount' => $request->input('amount'),
-            'status' => $request->input('status', 'pending'),
-            'user_id' => $request->input('user_id'),
-        ]);
+
+            $items = $request->input('items', []);
+
+            foreach ($items as $item) {
+
+                $transactions_detail_id = TransactionDetail::create([
+                    'transaction_id' => $transactions_id,
+                    'menu_id' => $item['menu_id'],
+                    'quantity' => $item['quantity'],
+                ])->id;
+                Menu::where('id', $item['menu_id'])
+                    ->decrement('stock', $item['quantity']);
+
+                if (isset($item['options']) && is_array($item['options'])) {
+                    foreach ($item['options'] as $option) {
+                        TransactionDetailVariant::create([
+                            'transaction_detail_id' => $transactions_detail_id,
+                            'variant_id' => $option['variant_id'],
+                            'variant_options_id' => $option['variant_option_id'],
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+            return response()->json([
+                'message' => 'Transaction processed successfully',
+                'data' => $request->all()
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to process transaction',
+                'error' => $th->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getTodayTransactions()
+    {
+        $transactions = Transaction::whereDate('created_at', now())
+            ->with(['user', 'promo'])
+            ->get();
 
         return response()->json([
-            'message' => 'Transaction processed successfully',
-            'data' => $request->all()
+            'message' => 'Today transactions retrieved successfully',
+            'data' => $transactions
         ]);
     }
 }

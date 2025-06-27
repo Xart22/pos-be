@@ -101,8 +101,9 @@ class MenuController extends Controller
 
 
 
-            MenuOption::where('menu_id', $menu->id)->delete();
+
             if ($request->variants != null) {
+                MenuOption::where('menu_id', $menu->id)->delete();
                 $variants = json_decode($request->variants, true);
                 foreach ($variants as $variant) {
                     MenuOption::create([
