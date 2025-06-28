@@ -7,4 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 class TransactionDetail extends Model
 {
     protected $guarded = [];
+
+
+    public function transaction()
+    {
+        return $this->belongsTo(Transaction::class);
+    }
+
+    public function menu()
+    {
+        return $this->belongsTo(Menu::class);
+    }
+
+    public function detailVariants()
+    {
+        return $this->hasMany(TransactionDetailVariant::class);
+    }
 }
