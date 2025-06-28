@@ -18,6 +18,10 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Route::middleware('auth:sanctum')->group(function () {
 
+
+Route::get('/start-open-cash-drawer', [AuthController::class, 'startOpenCashDrawer']);
+Route::post('/start-open-cash-drawer', [AuthController::class, 'updateOpenCashDrawer']);
+
 Route::get('/me', [AuthController::class, 'me']);
 Route::post('/logout', [AuthController::class, 'logout']);
 

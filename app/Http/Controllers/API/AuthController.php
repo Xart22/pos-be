@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashDrawer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -45,6 +46,31 @@ class AuthController extends Controller
         Auth::logout();
         return response()->json([
             'message' => 'Logged out'
+        ]);
+    }
+
+
+    public function startOpenCashDrawer(Request $request)
+    {
+        $cashDrawer = CashDrawer::where('created_at', '>=', now()->startOfDay())
+            ->where('created_at', '<=', now()->endOfDay())
+            ->first();
+
+        return response()->json([
+            'message' => 'Cash drawer already opened for today',
+            'cash_drawer' => $cashDrawer
+        ]);
+    }
+
+    public function updateOpenCashDrawer(Request $request)
+    {
+        $cashDrawer = CashDrawer::create([
+            'opening_balance' => $request->opening_balance,
+        ]);
+
+        return response()->json([
+            'message' => 'Cash drawer opened successfully',
+            'cash_drawer' => $cashDrawer
         ]);
     }
 }

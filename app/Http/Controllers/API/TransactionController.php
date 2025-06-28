@@ -46,6 +46,8 @@ class TransactionController extends Controller
                 'discount' => $request->input('discount', 0), // default to 0
                 'total_price' => $request->input('total'), // required
                 'payment_proof' => $request->input('payment_proof', null), // optional
+                'table_number' => $request->input('table_number', null), // optional
+                'sub_total' => $request->input('sub_total', 0), // default to 0
             ];
             DB::beginTransaction();
             $transactions_id = Transaction::create($transactions)->id;
