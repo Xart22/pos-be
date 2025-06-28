@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashDrawer;
 use App\Models\Menu;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
@@ -100,9 +101,13 @@ class TransactionController extends Controller
             ->with(['user', 'details'])
             ->get();
 
+        $cashDrawer = CashDrawer::whereBetween('created_at', [$start, $end])->first();
+
         return response()->json([
             'message' => 'Today transactions retrieved successfully',
-            'data' => $transactions
+
+            'data' => $transactions,
+            'cash_drawer' => $cashDrawer ? $cashDrawer->opening_balance : 0
         ]);
     }
 }

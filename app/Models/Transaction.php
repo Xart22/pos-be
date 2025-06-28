@@ -9,15 +9,6 @@ class Transaction extends Model
 {
     protected $guarded = [];
 
-    public function getCreatedAtAttribute($value)
-    {
-        return Carbon::parse($value)->timezone('Asia/Jakarta')->toDateTimeString();
-    }
-
-    public function getUpdatedAtAttribute($value)
-    {
-        return Carbon::parse($value)->timezone('Asia/Jakarta')->toDateTimeString();
-    }
     public function user()
     {
         return $this->belongsTo(User::class);

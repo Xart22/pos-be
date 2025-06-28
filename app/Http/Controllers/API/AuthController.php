@@ -52,13 +52,13 @@ class AuthController extends Controller
 
     public function startOpenCashDrawer(Request $request)
     {
-        $cashDrawer = CashDrawer::where('created_at', '>=', now()->startOfDay())
-            ->where('created_at', '<=', now()->endOfDay())
-            ->first();
+        $start = now('Asia/Jakarta')->startOfDay()->timezone('UTC');
+        $end = now('Asia/Jakarta')->endOfDay()->timezone('UTC');
+        $cashDrawer = CashDrawer::whereBetween('created_at', [$start, $end])->first();
 
         return response()->json([
             'message' => 'Cash drawer already opened for today',
-            'cash_drawer' => $cashDrawer
+            'cash_drawer' => $cashDrawer->opening_balance ?? 0
         ]);
     }
 
@@ -70,7 +70,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Cash drawer opened successfully',
-            'cash_drawer' => $cashDrawer
+            'cash_drawer' => $cashDrawer->opening_balance
         ]);
     }
 }
