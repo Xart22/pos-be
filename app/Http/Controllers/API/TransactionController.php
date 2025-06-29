@@ -94,8 +94,8 @@ class TransactionController extends Controller
     public function getTodayTransactions()
     {
         // Rentang waktu dalam WIB
-        $start = now('Asia/Jakarta')->startOfDay()->timezone('UTC');
-        $end = now('Asia/Jakarta')->endOfDay()->timezone('UTC');
+        $start = now('Asia/Jakarta')->startOfDay();
+        $end = now('Asia/Jakarta')->endOfDay();
 
         $transactions = Transaction::whereBetween('created_at', [$start, $end])
             ->with(['user', 'details'])

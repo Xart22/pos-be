@@ -23,13 +23,4 @@ class Transaction extends Model
     {
         return $this->belongsTo(Promo::class);
     }
-    public function getCreatedAtAttribute($value)
-    {
-        return \Carbon\Carbon::parse($value)->timezone('Asia/Jakarta')->toDateTimeString();
-    }
-
-    public function getUpdatedAtAttribute($value)
-    {
-        return \Carbon\Carbon::parse($value)->timezone('Asia/Jakarta')->toDateTimeString();
-    }
 }
