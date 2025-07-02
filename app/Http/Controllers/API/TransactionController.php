@@ -145,6 +145,7 @@ class TransactionController extends Controller
         }
         $data = [
             'order_number' => $transaction->order_id,
+            'order_date' => $transaction->created_at->format('Y-m-d H:i:s'),
             'customer_name' => $transaction->customer_name,
             'table_number' => $transaction->table_number,
             'sub_total' => $transaction->sub_total,
