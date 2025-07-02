@@ -155,6 +155,7 @@ class TransactionController extends Controller
             'payment_method' => $transaction->payment_method,
             'cash' => $transaction->cash,
             'change' => $transaction->change,
+            'payment_proof' => $transaction->payment_proof,
             'data' => $order,
         ];
 
