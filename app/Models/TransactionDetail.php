@@ -14,12 +14,13 @@ class TransactionDetail extends Model
         return $this->belongsTo(Transaction::class);
     }
 
+
     public function menu()
     {
         return $this->belongsTo(Menu::class);
     }
 
-    public function detailVariants()
+    public function variants()
     {
         return $this->hasMany(TransactionDetailVariant::class);
     }

@@ -58,5 +58,6 @@ Route::prefix('/transactions')->group(function () {
     Route::get('/order-number', [TransactionController::class, 'getOrderNumber']);
     Route::post('/process', [TransactionController::class, 'processTransaction']);
     Route::get('/get-trasactions-today', [TransactionController::class, 'getTodayTransactions']);
+    Route::get('/get-transaction/{id}', [TransactionController::class, 'getTransactionsById']);
 });
 // });

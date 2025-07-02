@@ -110,4 +110,57 @@ class TransactionController extends Controller
             'cash_drawer' => $cashDrawer ? $cashDrawer->opening_balance : 0
         ]);
     }
+
+    public function getTransactionsById($id)
+    {
+        $transaction = Transaction::with([
+            'details.menu',
+            'details.variants.variantOption.variant'
+        ])->where('id', $id)->first();
+
+
+        if (!$transaction) {
+            return response()->json([
+                'message' => 'Transaction not found'
+            ], 404);
+        }
+
+        $order = [];
+        foreach ($transaction->details as $detail) {
+            $order[] = [
+                'menu' => $detail->menu->name,
+                'quantity' => $detail->quantity,
+                'base_price' => $detail->menu->price,
+                'variant_price' => $detail->variants->sum('variantOption.price'),
+                'total_price' => $detail->menu->price * $detail->quantity + $detail->variants->sum('variantOption.price'),
+
+                'variants' => $detail->variants->map(function ($variant) {
+                    return [
+                        'variant_name' => $variant->variantOption->variant->name,
+                        'name' => $variant->variantOption->name,
+                        'price' => $variant->variantOption->price
+                    ];
+                }),
+            ];
+        }
+        $data = [
+            'order_number' => $transaction->order_id,
+            'customer_name' => $transaction->customer_name,
+            'table_number' => $transaction->table_number,
+            'sub_total' => $transaction->sub_total,
+            'discount' => $transaction->discount,
+            'total' => $transaction->total_price,
+            'payment_method' => $transaction->payment_method,
+            'cash' => $transaction->cash,
+            'change' => $transaction->change,
+
+
+            'data' => $order,
+        ];
+
+        return response()->json([
+            'message' => 'Transaction retrieved successfully',
+            'data' => $data
+        ]);
+    }
 }
