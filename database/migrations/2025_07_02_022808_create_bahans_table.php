@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('bahan_baku_id')
                 ->constrained('bahan_bakus')
                 ->onDelete('cascade');
-            $table->decimal('jumlah', 10, 2)->default(0);
+            $table->bigInteger('jumlah');
             $table->string('satuan')->nullable();
             $table->text('keterangan')->nullable();
             $table->timestamps();

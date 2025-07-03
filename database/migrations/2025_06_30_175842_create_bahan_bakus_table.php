@@ -13,12 +13,10 @@ return new class extends Migration
     {
         Schema::create('bahan_bakus', function (Blueprint $table) {
             $table->id();
+            $table->string('kode')->unique();
             $table->string('name');
-            $table->foreignId('category_id')
-                ->constrained('category_bahan_bakus')
-                ->onDelete('cascade');
             $table->bigInteger('harga');
-            $table->integer('stok')->default(0);
+            $table->integer('stock')->default(0);
             $table->string('satuan')->nullable();
             $table->text('deskripsi')->nullable();
             $table->timestamps();

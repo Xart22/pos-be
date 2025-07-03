@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\BahanBakuController;
 use App\Http\Controllers\API\CategoriController;
 use App\Http\Controllers\API\MenuController;
 use App\Http\Controllers\API\SettingsController;
@@ -60,4 +61,18 @@ Route::prefix('/transactions')->group(function () {
     Route::get('/get-trasactions-today', [TransactionController::class, 'getTodayTransactions']);
     Route::get('/get-transaction/{id}', [TransactionController::class, 'getTransactionsById']);
 });
+
+Route::prefix('/ingredients')->group(function () {
+    Route::get('/', [BahanBakuController::class, 'index']);
+    Route::get('/{id}', [BahanBakuController::class, 'show']);
+    Route::post('/store', [BahanBakuController::class, 'store']);
+    Route::put('/update/{id}', [BahanBakuController::class, 'update']);
+    Route::delete('/delete/{id}', [BahanBakuController::class, 'destroy']);
+});
+
+Route::prefix('/unit')->group(function () {
+    Route::get('/', [BahanBakuController::class, 'index']);
+});
+
+
 // });
