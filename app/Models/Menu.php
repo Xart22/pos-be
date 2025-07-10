@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Menu extends Model
 {
     protected $guarded = [];
-    protected $hidden = ['created_at', 'updated_at', 'category_id'];
+    protected $hidden = ['created_at', 'updated_at'];
 
     protected $with = ['category', 'variants'];
     public function category()
