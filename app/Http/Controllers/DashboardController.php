@@ -57,6 +57,21 @@ class DashboardController extends Controller
     public function handleSubmit(Request $request)
     {
 
+        $lat = -6.946912929555798;
+        $long = 107.7250390895087;
+        $distance = 100; // in meters
+
+        if (!$request->has('latitude') || !$request->has('longitude')) {
+            return redirect()->back()->withErrors(['location' => 'Lokasi tidak tersedia.']);
+        }
+
+        $userLat = $request->input('latitude');
+        $userLong = $request->input('longitude');
+        $calculatedDistance = $this->calculateDistance($lat, $long, $userLat, $userLong);
+        if ($calculatedDistance > $distance) {
+            return redirect()->back()->withErrors(['location' => 'Anda tidak berada di lokasi yang ditentukan.']);
+        }
+
         $absensi = new Absensi();
         $absensi->user_id = Auth::id();
         $absensi->tanggal = now()->format('Y-m-d');
@@ -69,5 +84,22 @@ class DashboardController extends Controller
     public function show()
     {
         return Inertia::render('dashboard/show');
+    }
+
+
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371000; // Earth radius in meters
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c; // Distance in meters
     }
 }

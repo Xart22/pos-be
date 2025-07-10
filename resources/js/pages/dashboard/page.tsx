@@ -44,9 +44,9 @@ export default function Dashboard({ absensis, totalEarnings, type }: DashboardPr
     const handleShiftChange = (value: string) => {
         setSelectedShift(value);
     };
+    const [error, setError] = useState('');
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        console.log('Submitting form with selected shift:', selectedShift);
         e.preventDefault();
         if (!location.latitude || !location.longitude) {
             console.error('Location not available');
@@ -56,22 +56,21 @@ export default function Dashboard({ absensis, totalEarnings, type }: DashboardPr
             console.error('Shift not selected');
             return;
         }
+
         const formData = new FormData();
-        formData.append('latitude', location.latitude.toString());
-        formData.append('longitude', location.longitude.toString());
+        formData.append('latitude', navigator.geolocation ? location.latitude.toString() : '');
+        formData.append('longitude', navigator.geolocation ? location.longitude.toString() : '');
         formData.append('shift', selectedShift);
         formData.append('type', type);
         router.post('/dashboard/absensi', formData, {
-            onSuccess: () => {
-                console.log('Absensi submitted successfully');
-            },
+            onSuccess: () => {},
             onError: (error) => {
                 console.error('Error submitting absensi:', error);
+                setError(error.location || 'An error occurred while submitting absensi.');
             },
         });
     };
 
-    const [error, setError] = useState('');
     useEffect(() => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -109,8 +108,10 @@ export default function Dashboard({ absensis, totalEarnings, type }: DashboardPr
                                     <DialogTrigger asChild>
                                         <Button>{type}</Button>
                                     </DialogTrigger>
-                                    <DialogContent className="sm:max-w-[425px]">
-                                        {' '}
+                                    <DialogContent className="mt-3 sm:max-w-[425px]">
+                                        <DialogHeader>
+                                            <DialogTitle>{type}</DialogTitle>
+                                        </DialogHeader>
                                         <form onSubmit={handleSubmit}>
                                             {location ? (
                                                 <>
@@ -122,10 +123,8 @@ export default function Dashboard({ absensis, totalEarnings, type }: DashboardPr
                                             ) : (
                                                 <p>Loading location...</p>
                                             )}
-                                            <DialogHeader>
-                                                <DialogTitle>{type}</DialogTitle>
-                                            </DialogHeader>
-                                            <Label className="mb-2 block" htmlFor="shift">
+
+                                            <Label className="mt-3 mb-2 block" htmlFor="shift">
                                                 Shift
                                             </Label>
                                             <Select onValueChange={handleShiftChange} value={selectedShift}>
@@ -150,6 +149,8 @@ export default function Dashboard({ absensis, totalEarnings, type }: DashboardPr
                                                 </Button>
                                             </DialogFooter>
                                         </form>
+                                        {/* error */}
+                                        {error && <p className="mt-2 text-red-500">Error: {error}</p>}
                                     </DialogContent>
                                 </Dialog>
                             ) : (
