@@ -16,6 +16,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('master-data/menu', [MenuController::class, 'index'])
         ->name('menu.index');
+
+
+    Route::post('dashboard/absensi', [DashboardController::class, 'handleSubmit'])
+        ->name('dashboard.absensi.submit');
 });
 
 require __DIR__ . '/settings.php';

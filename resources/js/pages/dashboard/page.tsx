@@ -1,13 +1,13 @@
 import { DataTable } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { convertToRupiah } from '@/lib/utils';
 import { Absensi, type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { columns } from './columns';
 
@@ -39,6 +39,38 @@ export default function Dashboard({ absensis, totalEarnings, type }: DashboardPr
         latitude: null,
         longitude: null,
     });
+    const [selectedShift, setSelectedShift] = useState<string | undefined>(undefined);
+
+    const handleShiftChange = (value: string) => {
+        setSelectedShift(value);
+    };
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        console.log('Submitting form with selected shift:', selectedShift);
+        e.preventDefault();
+        if (!location.latitude || !location.longitude) {
+            console.error('Location not available');
+            return;
+        }
+        if (!selectedShift) {
+            console.error('Shift not selected');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('latitude', location.latitude.toString());
+        formData.append('longitude', location.longitude.toString());
+        formData.append('shift', selectedShift);
+        formData.append('type', type);
+        router.post('/dashboard/absensi', formData, {
+            onSuccess: () => {
+                console.log('Absensi submitted successfully');
+            },
+            onError: (error) => {
+                console.error('Error submitting absensi:', error);
+            },
+        });
+    };
+
     const [error, setError] = useState('');
     useEffect(() => {
         if (navigator.geolocation) {
@@ -74,18 +106,12 @@ export default function Dashboard({ absensis, totalEarnings, type }: DashboardPr
                         <Card className="absolute inset-0 flex items-center justify-center p-4">
                             {type == 'Absen Masuk' ? (
                                 <Dialog>
-                                    <form
-                                        onSubmit={(e) => {
-                                            e.preventDefault();
-                                            // Handle form submission logic here
-                                            console.log('Form submitted');
-                                        }}
-                                    >
-                                        <DialogTrigger asChild>
-                                            <Button>{type}</Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[425px]">
-                                            {' '}
+                                    <DialogTrigger asChild>
+                                        <Button>{type}</Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                        {' '}
+                                        <form onSubmit={handleSubmit}>
                                             {location ? (
                                                 <>
                                                     <p>Latitude: {location.latitude}</p>
@@ -102,7 +128,7 @@ export default function Dashboard({ absensis, totalEarnings, type }: DashboardPr
                                             <Label className="mb-2 block" htmlFor="shift">
                                                 Shift
                                             </Label>
-                                            <Select>
+                                            <Select onValueChange={handleShiftChange} value={selectedShift}>
                                                 <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Select shift" />
                                                 </SelectTrigger>
@@ -123,29 +149,16 @@ export default function Dashboard({ absensis, totalEarnings, type }: DashboardPr
                                                     Submit
                                                 </Button>
                                             </DialogFooter>
-                                        </DialogContent>
-                                    </form>
+                                        </form>
+                                    </DialogContent>
                                 </Dialog>
                             ) : (
-                                <Dialog>
-                                    <form>
-                                        <DialogTrigger asChild>
-                                            <Button>{type}</Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[425px]">
-                                            <DialogHeader>
-                                                <DialogTitle>Edit profile</DialogTitle>
-                                            </DialogHeader>
-
-                                            <DialogFooter>
-                                                <DialogClose asChild>
-                                                    <Button>Cancel</Button>
-                                                </DialogClose>
-                                                <Button type="submit">Save changes</Button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </form>
-                                </Dialog>
+                                <>
+                                    <p className="text-2xl font-bold">{type}</p>
+                                    <Button className="mt-4 w-full bg-[#4CAF50] hover:bg-[#45A049]" disabled>
+                                        {type}
+                                    </Button>
+                                </>
                             )}
                         </Card>
                     </div>

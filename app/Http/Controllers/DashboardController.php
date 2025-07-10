@@ -36,10 +36,6 @@ class DashboardController extends Controller
             $type = "Absen Masuk";
         }
 
-
-
-
-
         return Inertia::render('dashboard/page', [
             'absensis' => $absensis,
             'totalEarnings' => $absensis->sum(function ($absensi) {
@@ -49,5 +45,29 @@ class DashboardController extends Controller
             'type' => $type,
 
         ]);
+    }
+
+
+    /**
+     * Handle the form submission for absensi.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function handleSubmit(Request $request)
+    {
+
+        $absensi = new Absensi();
+        $absensi->user_id = Auth::id();
+        $absensi->tanggal = now()->format('Y-m-d');
+        $absensi->shift = $request->shift;
+        $absensi->jam_masuk = $request->type === 'Absen Masuk' ? now()->format('H:i:s') : null;
+        $absensi->save();
+
+        return redirect()->back()->with('success', 'Absensi berhasil disimpan.');
+    }
+    public function show()
+    {
+        return Inertia::render('dashboard/show');
     }
 }
