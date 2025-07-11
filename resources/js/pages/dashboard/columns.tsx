@@ -50,4 +50,11 @@ export const columns: ColumnDef<Absensi>[] = [
         enableSorting: true,
         enableHiding: false,
     },
+    {
+        accessorKey: 'keterangan',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Keterangan" />,
+        cell: ({ row }) => <div className="w-[80px]">{row.getValue('keterangan')}</div>,
+        enableSorting: true,
+        enableHiding: false,
+    },
 ];

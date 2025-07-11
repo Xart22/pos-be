@@ -14,6 +14,7 @@ import { columns } from './columns';
 type DashboardProps = {
     absensis: Absensi[];
     totalEarnings: number;
+    paid: number;
     type: string;
 };
 
@@ -24,7 +25,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Dashboard({ absensis, totalEarnings, type }: DashboardProps) {
+export default function Dashboard({ absensis, totalEarnings, paid, type }: DashboardProps) {
     const data: Absensi[] = [...absensis];
     // check the time today
     const today = new Date();
@@ -93,85 +94,106 @@ export default function Dashboard({ absensis, totalEarnings, type }: DashboardPr
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <Card className="absolute inset-0 flex items-center justify-center p-4">
-                            <h2 className="text-lg font-semibold">Total Absensi</h2>
-                            <p className="text-2xl font-bold">{data.length} Hari</p>
+            <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8">
+                {/* Cards Section */}
+                <div className="grid auto-rows-[1fr] grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {/* Card 1: Total Absensi */}
+                    <div className="rounded-xl border border-border dark:border-gray-700">
+                        <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
+                            <h2 className="text-base font-semibold text-muted-foreground">Total Absensi</h2>
+                            <p className="mt-2 text-3xl font-bold text-primary">{data.length} Hari</p>
                         </Card>
                     </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <Card className="absolute inset-0 flex items-center justify-center p-4">
-                            {type == 'Absen Masuk' ? (
+
+                    {/* Card 2: Absen Masuk / Button */}
+                    <div className="rounded-xl border border-border dark:border-gray-700">
+                        <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
+                            {type === 'Absen Masuk' ? (
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button>{type}</Button>
+                                        <Button size="lg" className="w-full max-w-xs">
+                                            {type}
+                                        </Button>
                                     </DialogTrigger>
                                     <DialogContent className="mt-3 sm:max-w-[425px]">
                                         <DialogHeader>
                                             <DialogTitle>{type}</DialogTitle>
                                         </DialogHeader>
-                                        <form onSubmit={handleSubmit}>
+                                        <form onSubmit={handleSubmit} className="space-y-4">
                                             {location ? (
-                                                <>
+                                                <div className="text-sm text-muted-foreground">
                                                     <p>Latitude: {location.latitude}</p>
                                                     <p>Longitude: {location.longitude}</p>
-                                                </>
+                                                </div>
                                             ) : error ? (
-                                                <p>Error: {error}</p>
+                                                <p className="text-sm text-red-500">Error: {error}</p>
                                             ) : (
-                                                <p>Loading location...</p>
+                                                <p className="text-sm text-muted-foreground">Loading location...</p>
                                             )}
 
-                                            <Label className="mt-3 mb-2 block" htmlFor="shift">
-                                                Shift
-                                            </Label>
-                                            <Select onValueChange={handleShiftChange} value={selectedShift}>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select shift" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="Pagi" disabled={disabledPagi}>
-                                                        Pagi
-                                                    </SelectItem>
-                                                    <SelectItem value="Siang" disabled={disabledSiang}>
-                                                        Siang
-                                                    </SelectItem>
-                                                    <SelectItem value="Full Time" disabled={disabledPagi}>
-                                                        Full Time
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            <div>
+                                                <Label htmlFor="shift">Shift</Label>
+                                                <Select onValueChange={handleShiftChange} value={selectedShift}>
+                                                    <SelectTrigger className="mt-1 w-full">
+                                                        <SelectValue placeholder="Pilih shift" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Pagi" disabled={disabledPagi}>
+                                                            Pagi
+                                                        </SelectItem>
+                                                        <SelectItem value="Siang" disabled={disabledSiang}>
+                                                            Siang
+                                                        </SelectItem>
+                                                        <SelectItem value="Full Time" disabled={disabledPagi}>
+                                                            Full Time
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
                                             <DialogFooter>
-                                                <Button variant="default" className="mt-4 w-full bg-[#4CAF50] hover:bg-[#45A049]" type="submit">
+                                                <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
                                                     Submit
                                                 </Button>
                                             </DialogFooter>
+
+                                            {error && <p className="mt-2 text-sm text-red-500">Error: {error}</p>}
                                         </form>
-                                        {/* error */}
-                                        {error && <p className="mt-2 text-red-500">Error: {error}</p>}
                                     </DialogContent>
                                 </Dialog>
                             ) : (
                                 <>
-                                    <p className="text-2xl font-bold">{type}</p>
-                                    <Button className="mt-4 w-full bg-[#4CAF50] hover:bg-[#45A049]" disabled>
+                                    <p className="text-2xl font-bold text-muted-foreground">{type}</p>
+                                    <Button className="mt-4 w-full max-w-xs bg-green-600 hover:bg-green-700" disabled>
                                         {type}
                                     </Button>
                                 </>
                             )}
                         </Card>
                     </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <Card className="absolute inset-0 flex items-center justify-center p-4">
-                            <h2 className="text-lg font-semibold">Total Earnings</h2>
-                            <p className="text-2xl font-bold">{convertToRupiah(totalEarnings.toString(), 'Rp ')}</p>
+
+                    {/* Card 3: Earnings Summary */}
+                    <div className="rounded-xl border border-border dark:border-gray-700">
+                        <Card className="flex h-full flex-col justify-center gap-4 p-6 text-center">
+                            <div>
+                                <h2 className="text-sm font-semibold text-muted-foreground">Total Unpaid</h2>
+                                <p className="text-base font-bold text-red-600">{convertToRupiah((totalEarnings - paid).toString(), 'Rp ')}</p>
+                            </div>
+                            <div>
+                                <h2 className="text-sm font-semibold text-muted-foreground">Total Paid Off</h2>
+                                <p className="text-base font-bold text-green-600">{convertToRupiah(paid.toString(), 'Rp ')}</p>
+                            </div>
+                            <div>
+                                <h2 className="text-sm font-semibold text-muted-foreground">Total Earnings</h2>
+                                <p className="text-base font-bold text-blue-600">{convertToRupiah(totalEarnings.toString(), 'Rp ')}</p>
+                            </div>
                         </Card>
                     </div>
                 </div>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                    <div className="container mx-auto py-10">
+
+                {/* Table Section */}
+                <div className="relative w-full overflow-hidden rounded-xl border border-border dark:border-gray-700">
+                    <div className="px-4 py-8 md:px-8">
                         <DataTable
                             columns={columns}
                             data={data}

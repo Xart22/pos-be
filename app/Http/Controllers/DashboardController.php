@@ -42,6 +42,11 @@ class DashboardController extends Controller
                 $cleanValue = str_replace(['Rp', '.', ','], '', $absensi->take_home_pay);
                 return (int)$cleanValue;
             }),
+            'paid' => $absensis->where('keterangan', 'Paid')->sum(function ($absensi) {
+                $cleanValue = str_replace(['Rp', '.', ','], '', $absensi->take_home_pay);
+                return (int)$cleanValue;
+            }),
+
             'type' => $type,
 
         ]);
