@@ -129,6 +129,7 @@ class TransactionController extends Controller
         foreach ($transaction->details as $detail) {
             $order[] = [
                 'menu' => $detail->menu->name,
+                'category' => $detail->menu->category->id,
                 'quantity' => $detail->quantity,
                 'base_price' => $detail->menu->price,
                 'variant_price' => $detail->variants->sum('variantOption.price'),
