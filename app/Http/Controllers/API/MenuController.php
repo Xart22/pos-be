@@ -13,7 +13,9 @@ class MenuController extends Controller
 {
     public function index(Request $request)
     {
-        $menu = Menu::all()->sortBy('name');
+        $menu = Menu::all();
+        //sort by name
+        $menu = $menu->sortBy('name')->values()->all();
 
         return response()->json([
             'message' => 'Menu retrieved successfully',
