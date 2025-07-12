@@ -13,7 +13,7 @@ class MenuController extends Controller
 {
     public function index(Request $request)
     {
-        $menu = Menu::all();
+        $menu = Menu::all()->sortBy('name');
 
         return response()->json([
             'message' => 'Menu retrieved successfully',
