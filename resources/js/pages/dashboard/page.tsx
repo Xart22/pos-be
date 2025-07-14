@@ -26,11 +26,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Dashboard({ absensis, totalEarnings, paid, type }: DashboardProps) {
-    const data: Absensi[] = [...absensis];
     // check the time today
     const today = new Date();
     const currentHour = today.getHours();
-    console.log('Current Hour:', currentHour);
     const disabledPagi = currentHour >= 12;
     const disabledSiang = currentHour < 12 || currentHour >= 18;
     const [location, setLocation] = useState<{
@@ -101,7 +99,7 @@ export default function Dashboard({ absensis, totalEarnings, paid, type }: Dashb
                     <div className="rounded-xl border border-border dark:border-gray-700">
                         <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
                             <h2 className="text-base font-semibold text-muted-foreground">Total Absensi</h2>
-                            <p className="mt-2 text-3xl font-bold text-primary">{data.length} Hari</p>
+                            <p className="mt-2 text-3xl font-bold text-primary">{absensis.length} Hari</p>
                         </Card>
                     </div>
 
@@ -194,11 +192,7 @@ export default function Dashboard({ absensis, totalEarnings, paid, type }: Dashb
                 {/* Table Section */}
                 <div className="relative w-full overflow-hidden rounded-xl border border-border dark:border-gray-700">
                     <div className="px-4 py-8 md:px-8">
-                        <DataTable
-                            columns={columns}
-                            data={data}
-                            filterColumn={['tanggal', 'shift', 'jam_masuk', 'jam_keluar', 'status', 'take_home_pay']}
-                        />
+                        <DataTable columns={columns} data={absensis} filterColumn={['kode', 'name', 'harga', 'stock', 'satuan', 'deskripsi']} />
                     </div>
                 </div>
             </div>

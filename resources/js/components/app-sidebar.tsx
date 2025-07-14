@@ -33,8 +33,8 @@ const mainNavItems = [
                 isAdmin: false,
             },
             {
-                title: 'Ingredients',
-                url: '/master-data/ingredients',
+                title: 'Bahan Baku',
+                url: '/master-data/bahan-baku',
                 isAdmin: true,
             },
             {

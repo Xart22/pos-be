@@ -17,7 +17,7 @@ class MenuController extends Controller
             ->select('menus.*') // hindari konflik kolom
             ->get();
 
-        return Inertia::render('master-data/menu', [
+        return Inertia::render('master-data/menu/index', [
             'menus' => $menus
         ]);
     }

@@ -11,7 +11,7 @@ class CategoriController extends Controller
 {
     public function index()
     {
-        $categories = Category::all();
+        $categories = Category::all()->sortBy('position')->values()->all();
         return response()->json([
             'message' => 'List of categories',
             'categories' => $categories

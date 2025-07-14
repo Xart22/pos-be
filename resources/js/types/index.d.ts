@@ -70,3 +70,37 @@ export interface Absensi {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface BahanBaku {
+    id: number;
+    kode: string;
+    name: string;
+    harga: number;
+    stock: number;
+    satuan: string;
+    deskripsi?: string; // Optional field
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface Bahan {
+    id: number;
+    recipe_id: number;
+    bahan_baku_id: number;
+    bahan_baku: BahanBaku;
+    jumlah: number;
+    satuan: string;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface Recipe {
+    id: number;
+    menu_id: number;
+    intructions: string;
+    image?: string;
+    bahan_bakus: Bahan[];
+    menu: Menu;
+}
