@@ -104,3 +104,17 @@ export interface Recipe {
     bahan_bakus: Bahan[];
     menu: Menu;
 }
+
+export interface Category {
+    id: number;
+    position: number;
+    name: string;
+    icon: string;
+}
+
+export interface OmsetChartData {
+    data: {
+        date: string;
+        omset: number;
+    };
+}

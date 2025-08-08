@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BahanBakuController;
+use App\Http\Controllers\CashInController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\RecipeController;
@@ -28,6 +29,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/master-data/recipes', [RecipeController::class, 'index'])
         ->name('recipes.index');
+
+    Route::get('/cash-flow/cash-in', [CashInController::class, 'index'])
+        ->name('cash-in.index');
 });
 
 require __DIR__ . '/settings.php';

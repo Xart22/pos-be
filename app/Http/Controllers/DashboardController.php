@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Absensi;
+use App\Models\Category;
+use App\Models\Menu;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -16,7 +19,75 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        //get absensi from 25th of the previous month to the 24th of the current month
+
+
+        if (Auth::user()->role === 'admin') {
+            $now = now();
+
+            if ($now->day >= 28) {
+                $startOfPeriod = $now->copy()->day(28);
+                $endOfPeriod = $now->copy()->addMonthNoOverflow()->day(27)->endOfDay();
+            } else {
+                $startOfPeriod = $now->copy()->subMonthNoOverflow()->day(28);
+                $endOfPeriod = $now->copy()->day(27)->endOfDay();
+            }
+            $omsetToday = Transaction::whereBetween('created_at', ["{$now->startOfDay()}", "{$now->endOfDay()}"])
+                ->sum('total_price');
+            $jumlahTransaksiToday = Transaction::whereBetween('created_at',  ["{$now->startOfDay()}", "{$now->endOfDay()}"])
+                ->count();
+
+            $totalTransaksiQris = Transaction::where('payment_method', 'qris')
+                ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+                ->sum('total_price');
+
+            $totalTransaksiCash = Transaction::where('payment_method', 'cash')
+                ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+                ->sum('total_price');
+
+            $omsetThisMonth = Transaction::whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+                ->sum('total_price');
+
+            $jumlahTransaksiThisMonth = Transaction::whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+                ->count();
+
+            $totalTransaksiQrisThisMonth = Transaction::where('payment_method', 'qris')
+                ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+                ->sum('total_price');
+
+            $totalTransaksiCashThisMonth = Transaction::where('payment_method', 'cash')
+                ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+                ->sum('total_price');
+
+            $categories = Category::get()->sortBy('position')->values()->all();
+            $menu = Menu::all();
+
+            $dataOmset = Transaction::whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+                ->selectRaw('DATE(created_at) as date, SUM(total_price) as Omset')
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->get();
+
+
+            return Inertia::render('dashboard/dashboard', [
+                'omsetToday' => $omsetToday,
+                'jumlahTransaksiToday' => $jumlahTransaksiToday,
+                'totalTransaksiQris' => $totalTransaksiQris,
+                'totalTransaksiCash' => $totalTransaksiCash,
+                'omsetThisMonth' => $omsetThisMonth,
+                'jumlahTransaksiThisMonth' => $jumlahTransaksiThisMonth,
+                'totalTransaksiQrisThisMonth' => $totalTransaksiQrisThisMonth,
+                'totalTransaksiCashThisMonth' => $totalTransaksiCashThisMonth,
+                'period' => [
+                    'start' => $startOfPeriod->format('Y-m-d'),
+                    'end' => $endOfPeriod->format('Y-m-d'),
+                ],
+                'categories' => $categories,
+                'menu' => $menu,
+                'dataOmset' => $dataOmset,
+            ]);
+        }
+
+
         $absensis = Absensi::where('user_id', Auth::id())
             ->whereBetween('tanggal', [now()->subMonth()->startOfMonth()->addDays(24), now()->endOfMonth()->addDays(24)])
             ->orderBy('tanggal', 'desc')
@@ -35,20 +106,11 @@ class DashboardController extends Controller
         } else {
             $type = "Absen Masuk";
         }
-
-        return Inertia::render('dashboard/page', [
-            'absensis' => $absensis,
-            'totalEarnings' => $absensis->sum(function ($absensi) {
-                $cleanValue = str_replace(['Rp', '.', ','], '', $absensi->take_home_pay);
-                return (int)$cleanValue;
-            }),
-            'paid' => $absensis->where('keterangan', 'Paid')->sum(function ($absensi) {
-                $cleanValue = str_replace(['Rp', '.', ','], '', $absensi->take_home_pay);
-                return (int)$cleanValue;
-            }),
-
-            'type' => $type,
-
+        return Inertia::render('dashboard/pegawai/dashboard', [
+            'absensis' => [],
+            'totalEarnings' => 0,
+            'paid' => 0,
+            'type' => null,
         ]);
     }
 
