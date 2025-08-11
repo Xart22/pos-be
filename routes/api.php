@@ -6,6 +6,7 @@ use App\Http\Controllers\API\CategoriController;
 use App\Http\Controllers\API\MenuController;
 use App\Http\Controllers\API\SettingsController;
 use App\Http\Controllers\API\TransactionController;
+use App\Http\Controllers\API\UtilsController;
 use App\Http\Controllers\API\VariantController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -73,6 +74,9 @@ Route::prefix('/ingredients')->group(function () {
 Route::prefix('/unit')->group(function () {
     Route::get('/', [BahanBakuController::class, 'index']);
 });
+
+
+Route::get('/merge', [UtilsController::class, 'tes']);
 
 
 // });

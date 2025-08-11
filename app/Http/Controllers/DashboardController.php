@@ -67,6 +67,45 @@ class DashboardController extends Controller
                 ->orderBy('date', 'asc')
                 ->get();
 
+            $transaction = Transaction::whereBetween('created_at', ["{$now->startOfDay()}", "{$now->endOfDay()}"])->with([
+                'details.menu',
+                'details.variants.variantOption.variant'
+            ])
+                ->get();
+            $foodCategory = [2, 3, 4, 5, 6, 7, 8, 9, 18];
+            $drinkCategory = [1, 10, 11, 12, 14, 16, 17];
+            $menuDrink = $menu->whereIn('category_id', $drinkCategory)->pluck('name')->toArray();
+            $menuFood = $menu->whereIn('category_id', $foodCategory)->pluck('name')->toArray();
+            $menuUnknown = $menu->whereNotIn('category_id', array_merge($foodCategory, $drinkCategory))->pluck('name')->toArray();
+
+
+            foreach ($transaction as $trans) {
+                foreach ($trans->details as $detail) {
+
+
+                    $order[] = [
+                        'menu' => $detail->menu->name,
+                        'category' => $detail->menu->category->id,
+                        'quantity' => $detail->quantity,
+                        'base_price' => $detail->menu->price,
+                        'variant_price' => $detail->variants->sum('variantOption.price'),
+                        'total_price' => $detail->menu->price * $detail->quantity + $detail->variants->sum('variantOption.price'),
+
+                        'variants' => $detail->variants->map(function ($variant) {
+                            return [
+                                'variant_name' => $variant->variantOption->variant->name,
+                                'name' => $variant->variantOption->name,
+                                'price' => $variant->variantOption->price
+                            ];
+                        }),
+                    ];
+                }
+            }
+
+
+
+            $itemSoldThisMonth = Transaction::whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+                ->count();
 
             return Inertia::render('dashboard/dashboard', [
                 'omsetToday' => $omsetToday,

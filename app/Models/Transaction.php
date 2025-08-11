@@ -14,6 +14,12 @@ class Transaction extends Model
         return $this->belongsTo(User::class);
     }
 
+
+    public function detail()
+    {
+        return $this->hasMany(TransactionDetail::class)->with('menu');
+    }
+
     public function details()
     {
         return $this->hasMany(TransactionDetail::class);
