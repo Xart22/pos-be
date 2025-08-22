@@ -19,18 +19,18 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        $now = now();
 
+        if ($now->day >= 28) {
+            $startOfPeriod = $now->copy()->day(28);
+            $endOfPeriod = $now->copy()->addMonthNoOverflow()->day(27)->endOfDay();
+        } else {
+            $startOfPeriod = $now->copy()->subMonthNoOverflow()->day(28);
+            $endOfPeriod = $now->copy()->day(27)->endOfDay();
+        }
 
         if (Auth::user()->role === 'admin') {
-            $now = now();
 
-            if ($now->day >= 28) {
-                $startOfPeriod = $now->copy()->day(28);
-                $endOfPeriod = $now->copy()->addMonthNoOverflow()->day(27)->endOfDay();
-            } else {
-                $startOfPeriod = $now->copy()->subMonthNoOverflow()->day(28);
-                $endOfPeriod = $now->copy()->day(27)->endOfDay();
-            }
             $omsetToday = Transaction::whereBetween('created_at', ["{$now->startOfDay()}", "{$now->endOfDay()}"])
                 ->sum('total_price');
             $jumlahTransaksiToday = Transaction::whereBetween('created_at',  ["{$now->startOfDay()}", "{$now->endOfDay()}"])
@@ -128,7 +128,7 @@ class DashboardController extends Controller
 
 
         $absensis = Absensi::where('user_id', Auth::id())
-            ->whereBetween('tanggal', [now()->subMonth()->startOfMonth()->addDays(24), now()->endOfMonth()->addDays(24)])
+            ->whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])
             ->orderBy('tanggal', 'desc')
             ->get()
             ->map(function ($absensi) {
@@ -146,10 +146,17 @@ class DashboardController extends Controller
             $type = "Absen Masuk";
         }
         return Inertia::render('dashboard/pegawai/dashboard', [
-            'absensis' => [],
-            'totalEarnings' => 0,
-            'paid' => 0,
-            'type' => null,
+            'absensis' => $absensis,
+            'totalEarnings' => $absensis->sum(function ($absensi) {
+                $cleanValue = str_replace(['Rp', '.', ','], '', $absensi->take_home_pay);
+                return (int)$cleanValue;
+            }),
+            'paid' => $absensis->where('keterangan', 'Paid')->sum(function ($absensi) {
+                $cleanValue = str_replace(['Rp', '.', ','], '', $absensi->take_home_pay);
+                return (int)$cleanValue;
+            }),
+
+            'type' => $type,
         ]);
     }
 
