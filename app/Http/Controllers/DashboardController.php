@@ -37,11 +37,11 @@ class DashboardController extends Controller
                 ->count();
 
             $totalTransaksiQris = Transaction::where('payment_method', 'qris')
-                ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+                ->whereBetween('created_at', ["{$now->startOfDay()}", "{$now->endOfDay()}"])
                 ->sum('total_price');
 
             $totalTransaksiCash = Transaction::where('payment_method', 'cash')
-                ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+                ->whereBetween('created_at', ["{$now->startOfDay()}", "{$now->endOfDay()}"])
                 ->sum('total_price');
 
             $omsetThisMonth = Transaction::whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
@@ -81,8 +81,6 @@ class DashboardController extends Controller
 
             foreach ($transaction as $trans) {
                 foreach ($trans->details as $detail) {
-
-
                     $order[] = [
                         'menu' => $detail->menu->name,
                         'category' => $detail->menu->category->id,
@@ -107,6 +105,7 @@ class DashboardController extends Controller
             $itemSoldThisMonth = Transaction::whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
                 ->count();
 
+
             return Inertia::render('dashboard/dashboard', [
                 'omsetToday' => $omsetToday,
                 'jumlahTransaksiToday' => $jumlahTransaksiToday,
@@ -128,7 +127,7 @@ class DashboardController extends Controller
 
 
         $absensis = Absensi::where('user_id', Auth::id())
-            ->whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])
+            ->whereBetween('tanggal', [$startOfPeriod->format('Y-m-d'), $endOfPeriod->format('Y-m-d')])
             ->orderBy('tanggal', 'desc')
             ->get()
             ->map(function ($absensi) {
