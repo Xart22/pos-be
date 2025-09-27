@@ -25,9 +25,10 @@ interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
     filterColumn?: string[];
+    enableSearching?: boolean;
 }
 
-export function DataTable<TData, TValue>({ columns, data, filterColumn }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({ columns, data, filterColumn, enableSearching }: DataTableProps<TData, TValue>) {
     const [rowSelection, setRowSelection] = React.useState({});
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -41,6 +42,11 @@ export function DataTable<TData, TValue>({ columns, data, filterColumn }: DataTa
             columnVisibility,
             rowSelection,
             columnFilters,
+        },
+        initialState: {
+            pagination: {
+                pageSize: 50,
+            },
         },
         enableRowSelection: true,
         onRowSelectionChange: setRowSelection,
@@ -57,7 +63,7 @@ export function DataTable<TData, TValue>({ columns, data, filterColumn }: DataTa
 
     return (
         <div className="space-y-4">
-            <DataTableToolbar table={table} filterColumns={filterColumn ?? []} placeholder="Search..." showResetButton={true} />
+            {enableSearching && <DataTableToolbar table={table} filterColumns={filterColumn ?? []} placeholder="Search..." showResetButton={true} />}
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>

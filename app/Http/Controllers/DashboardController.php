@@ -66,40 +66,103 @@ class DashboardController extends Controller
                 ->groupBy('date')
                 ->orderBy('date', 'asc')
                 ->get();
+            //now -1day
+            $yesterday = now()->subDay();
 
-            $transaction = Transaction::whereBetween('created_at', ["{$now->startOfDay()}", "{$now->endOfDay()}"])->with([
+            $transactions = Transaction::whereDate('created_at', $yesterday)->get();
+
+            $transactions->load([
                 'details.menu',
                 'details.variants.variantOption.variant'
-            ])
-                ->get();
+            ]);
+
             $foodCategory = [2, 3, 4, 5, 6, 7, 8, 9, 18];
             $drinkCategory = [1, 10, 11, 12, 14, 16, 17];
-            $menuDrink = $menu->whereIn('category_id', $drinkCategory)->pluck('name')->toArray();
-            $menuFood = $menu->whereIn('category_id', $foodCategory)->pluck('name')->toArray();
-            $menuUnknown = $menu->whereNotIn('category_id', array_merge($foodCategory, $drinkCategory))->pluck('name')->toArray();
 
+            $transFood = [];
+            $transDrink = [];
+            $transUnknown = [];
 
-            foreach ($transaction as $trans) {
-                foreach ($trans->details as $detail) {
-                    $order[] = [
-                        'menu' => $detail->menu->name,
-                        'category' => $detail->menu->category->id,
-                        'quantity' => $detail->quantity,
-                        'base_price' => $detail->menu->price,
-                        'variant_price' => $detail->variants->sum('variantOption.price'),
-                        'total_price' => $detail->menu->price * $detail->quantity + $detail->variants->sum('variantOption.price'),
+            // Ubah category list jadi "set" O(1) lookup
+            $foodSet  = array_flip($foodCategory ?? []);
+            $drinkSet = array_flip($drinkCategory ?? []);
 
-                        'variants' => $detail->variants->map(function ($variant) {
-                            return [
-                                'variant_name' => $variant->variantOption->variant->name,
-                                'name' => $variant->variantOption->name,
-                                'price' => $variant->variantOption->price
-                            ];
-                        }),
+            foreach ($transactions as $tx) {
+                foreach ($tx->details as $detail) {
+                    $menu       = $detail->menu;
+                    $categoryId = $menu->category->id ?? null;
+
+                    // Hitung sekali saja
+                    $quantity      = (int) $detail->quantity;
+                    $basePrice     = (float) ($menu->price ?? 0);
+                    $variantPrice  = (float) $detail->variants->sum('variantOption.price');
+
+                    // Susun info variant (nama, harga, dsb)
+                    $variantItems = $detail->variants->map(function ($variant) {
+                        return [
+                            'variant_name' => $variant->variantOption->variant->name ?? null,
+                            'name'         => $variant->variantOption->name ?? null,
+                            'price'        => (float) ($variant->variantOption->price ?? 0),
+                        ];
+                    });
+
+                    // Untuk pembeda menu minuman, gunakan nama varian yang diurutkan agar konsisten
+                    $variantNames = $detail->variants
+                        ->pluck('variantOption.name')
+                        ->filter()
+                        ->sort()
+                        ->values()
+                        ->all();
+
+                    // BUAT KEY:
+                    // - Food: gabung berdasarkan nama menu saja
+                    // - Drink: jika ada varian maka gabung per "menu + varian", jika tidak ada varian ya nama menu saja
+                    $baseKey = $menu->name ?? 'Unknown';
+                    $drinkKey = $variantNames
+                        ? $baseKey . ' - ' . implode(', ', $variantNames)
+                        : $baseKey;
+
+                    // Normalized row (sekali bikin, nanti tinggal ditambah kuantitas & total)
+                    $row = [
+                        'menu'          => $baseKey,
+                        'category'      => $categoryId,
+                        'quantity'      => $quantity,
+                        'base_price'    => $basePrice,
+                        'variant_price' => $variantPrice,
+                        'total_price'   => ($basePrice * $quantity) + $variantPrice,
+                        'variants'      => $variantItems,
                     ];
+
+                    // Tentukan bucket & key
+                    if (isset($foodSet[$categoryId])) {
+                        $key = $baseKey; // food: gabung per nama menu
+                        if (!isset($transFood[$key])) {
+                            $transFood[$key] = $row;
+                        } else {
+                            $transFood[$key]['quantity']    += $row['quantity'];
+                            $transFood[$key]['total_price'] += $row['total_price'];
+                        }
+                    } elseif (isset($drinkSet[$categoryId])) {
+                        $key = $drinkKey; // drink: bedakan varian
+                        // Perbarui label 'menu' agar tampak nama + varian saat disimpan
+                        $row['menu'] = $key;
+                        if (!isset($transDrink[$key])) {
+                            $transDrink[$key] = $row;
+                        } else {
+                            $transDrink[$key]['quantity']    += $row['quantity'];
+                            $transDrink[$key]['total_price'] += $row['total_price'];
+                        }
+                    } else {
+                        // Unknown: simpan apa adanya (kalau mau digabung, bisa pakai key $baseKey juga)
+                        $transUnknown[] = $row;
+                    }
                 }
             }
 
+            // Jika butuh array numerik (bukan assoc), reindex:
+            $transFood    = array_values($transFood);
+            $transDrink   = array_values($transDrink);
+            // $transUnknown sudah numerik
 
 
             $itemSoldThisMonth = Transaction::whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
@@ -120,8 +183,10 @@ class DashboardController extends Controller
                     'end' => $endOfPeriod->format('Y-m-d'),
                 ],
                 'categories' => $categories,
-                'menu' => $menu,
                 'dataOmset' => $dataOmset,
+                'txDrink' => $transDrink,
+                'txFood' => $transFood,
+                'txUnknown' => $transUnknown,
             ]);
         }
 

@@ -9,7 +9,7 @@ import { convertToRupiah } from '@/lib/utils';
 import { Absensi, type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
-import { columns } from '../columns';
+import { columns } from './columns';
 
 type DashboardProps = {
     absensis: Absensi[];

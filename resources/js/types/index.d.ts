@@ -58,6 +58,15 @@ export interface Menu {
     [key: string]: unknown; // This allows for additional properties...
 }
 
+export interface TxMenu {
+    menu: string;
+    category: number;
+    quantity: number;
+    base_price: number;
+    variant_price: number;
+    total_price: number;
+}
+
 export interface Absensi {
     id: number;
     user: User;

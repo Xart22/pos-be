@@ -4,14 +4,16 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Models\TransactionDetail;
+use App\Models\TransactionDetailVariant;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class UtilsController extends Controller
 {
     public function tes()
     {
-
-
         $transactions = [
             [
                 'id' => 1,
@@ -3352,12 +3354,97 @@ class UtilsController extends Controller
             ]
         ];
 
+        $merge = [];
+
 
         foreach ($transactions as $transaction) {
             $id = $transaction['id'];
             //find transaction_detail by id
+
+            //set data same as transaction just remove id
+            $data = $transaction;
+            unset($data['id']);
+
             $transactionDetail = array_filter($transaction_details, fn($detail) => $detail['transaction_id'] === $id);
-            dd($transactionDetail);
+            $data['transaction_details'] = $transactionDetail;
+
+
+            foreach ($transactionDetail as $i => $detail) {
+                unset($data['transaction_details'][$i]['id']);
+                unset($data['transaction_details'][$i]['transaction_id']);
+                $detail_id = $detail['id'];
+                $variants = array_filter($transaction_details_variant, fn($variant) => (int) $variant['transaction_detail_id'] === $detail_id);
+                if (!empty($variants)) {
+                    $data['transaction_details'][$i]['variant'] = $variants;
+                    foreach ($data['transaction_details'][$i]['variant'] as $j => $variant) {
+                        unset($data['transaction_details'][$i]['variant'][$j]['id']);
+                        unset($data['transaction_details'][$i]['variant'][$j]['transaction_detail_id']);
+                    }
+                } else {
+                    $data['transaction_details'][$i]['variant'] = [];
+                }
+            }
+
+            $merge[] = $data;
+        }
+        try {
+            DB::beginTransaction();
+            foreach ($merge as $item) {
+                $createdAt = str_replace('=>', ':', $item['created_at']);
+                $updatedAt = str_replace('=>', ':', $item['updated_at']);
+                $id = Transaction::create([
+                    'order_id' => $item['order_id'],
+                    'user_id' => $item['user_id'],
+                    'type' => $item['type'],
+                    'status' => $item['status'],
+                    'table_number' => $item['table_number'],
+                    'customer_name' => $item['customer_name'],
+                    'sub_total' => $item['sub_total'],
+                    'total_price' => $item['total_price'],
+                    'discount' => $item['discount'],
+                    'cash' => $item['cash'],
+                    'change' => $item['change'],
+                    'payment_method' => $item['payment_method'],
+                    'note' => $item['note'],
+                    'payment_proof' => $item['payment_proof'],
+                    'created_at' => Carbon::parse($createdAt),
+                    'updated_at' => Carbon::parse($updatedAt)
+                ])->id;
+                foreach ($item['transaction_details'] as $detail) {
+                    $detailCreatedAt = str_replace('=>', ':', $detail['created_at']);
+                    $detailUpdatedAt = str_replace('=>', ':', $detail['updated_at']);
+                    $detail_id = TransactionDetail::create([
+                        'transaction_id' => $id,
+                        'menu_id' => $detail['menu_id'],
+                        'quantity' => $detail['quantity'],
+                        'note' => $detail['note'],
+                        'created_at' => Carbon::parse($detailCreatedAt),
+                        'updated_at' => Carbon::parse($detailUpdatedAt)
+                    ])->id;
+                    foreach ($detail['variant'] as $variant) {
+                        $variantCreatedAt = str_replace('=>', ':', $variant['created_at']);
+                        $variantUpdatedAt = str_replace('=>', ':', $variant['updated_at']);
+                        TransactionDetailVariant::create([
+                            'transaction_detail_id' => $detail_id,
+                            'variant_options_id' => $variant['variant_options_id'],
+                            'variant_id' => $variant['variant_id'],
+                            'created_at' => Carbon::parse($variantCreatedAt),
+                            'updated_at' => Carbon::parse($variantUpdatedAt)
+                        ]);
+                    }
+                }
+            }
+            DB::commit();
+            return response()->json([
+                'message' => 'Transaction data imported successfully',
+                'data' => $merge
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to import transaction data',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

@@ -1,9 +1,11 @@
 import LineBarChart from '@/components/chart/line-bar-chart';
+import { DataTable } from '@/components/data-table';
 import { Card } from '@/components/ui/card';
 import formatRupiah from '@/helper/formatRupiah';
 import AppLayout from '@/layouts/app-layout';
-import { Category, Menu, OmsetChartData, type BreadcrumbItem } from '@/types';
+import { Category, OmsetChartData, TxMenu, type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
+import { columns } from './columns';
 
 type DashboardProps = {
     omsetToday: string;
@@ -19,7 +21,9 @@ type DashboardProps = {
         end: string;
     };
     categories: Category[];
-    menu: Menu[];
+    txDrink: TxMenu[];
+    txFood: TxMenu[];
+    txUnknown: TxMenu[];
     dataOmset: OmsetChartData[];
 };
 
@@ -41,9 +45,12 @@ export default function Dashboard({
     totalTransaksiCashThisMonth,
     period,
     categories,
-    menu,
+    txDrink,
+    txFood,
+    txUnknown,
     dataOmset,
 }: DashboardProps) {
+    console.log({ txDrink, txFood, txUnknown });
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
@@ -110,38 +117,27 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                {/*                 
                 <h2 className="text-center text-2xl font-bold text-muted-foreground">Penjualan</h2>
-                <div className="grid auto-rows-[1fr] grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-xl border border-border dark:border-gray-700">
+                <div className="flex flex-col justify-between gap-2 p-2 md:flex-row md:p-4 lg:p-6">
+                    <div className="rounded-xl dark:border-gray-700">
                         <Card className="h-full text-center">
-                            <h2 className="text-base font-semibold text-muted-foreground">Penjualan Hari ini By Category </h2>
-                            {categories.map((category) => (
-                                <p key={category.id} className="md:text-md text-sm">
-                                    {category.name}
-                                </p>
-                            ))}
+                            <h2 className="text-base font-semibold text-muted-foreground">Penjualan Minuman Hari ini </h2>
+                            <p className="text-sm">Total Menu: {txDrink.length}</p>
+                            <p className="text-sm">Total Quantity: {txDrink.reduce((acc, item) => acc + item.quantity, 0)}</p>
+                            <p className="text-sm">Total Omset: {formatRupiah(txDrink.reduce((acc, item) => acc + item.total_price, 0))}</p>
+                            {txDrink.length > 0 && <DataTable columns={columns} data={txDrink} enableSearching={false} />}
                         </Card>
                     </div>
-                    <div className="rounded-xl border border-border dark:border-gray-700">
+                    <div className="rounded-xl dark:border-gray-700">
                         <Card className="h-full text-center">
-                            <h2 className="text-base font-semibold text-muted-foreground">Penjualan Hari ini By Menu </h2>
-                            {menu.map((item) => (
-                                <p key={item.id} className="md:text-md text-sm">
-                                    {item.name}
-                                </p>
-                            ))}
+                            <h2 className="text-base font-semibold text-muted-foreground">Penjualan Minuman Hari ini </h2>
+                            <p className="text-sm">Total Menu: {txFood.length}</p>
+                            <p className="text-sm">Total Quantity: {txFood.reduce((acc, item) => acc + item.quantity, 0)}</p>
+                            <p className="text-sm">Total Omset: {formatRupiah(txFood.reduce((acc, item) => acc + item.total_price, 0))}</p>
+                            {txFood.length > 0 && <DataTable columns={columns} data={txFood} enableSearching={false} />}
                         </Card>
                     </div>
-                    <div className="rounded-xl border border-border dark:border-gray-700">
-                        <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
-                            <h2 className="text-base font-semibold text-muted-foreground">Penjualan Bulan ini</h2>
-                            <p className="text-1xl  font-bold text-primary md:text-2xl">
-                                {formatRupiah(parseFloat(totalTransaksiQrisThisMonth))}
-                            </p>
-                        </Card>
-                    </div>
-                </div> */}
+                </div>
             </div>
             <div className="flex gap-2 p-4 md:p-6 lg:p-8">
                 <Card className="h-96 w-full p-4">
