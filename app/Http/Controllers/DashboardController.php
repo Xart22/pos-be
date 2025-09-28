@@ -17,31 +17,37 @@ class DashboardController extends Controller
      *
      * @return \Inertia\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $now = now();
-
-        if ($now->day >= 28) {
-            $startOfPeriod = $now->copy()->day(28);
-            $endOfPeriod = $now->copy()->addMonthNoOverflow()->day(27)->endOfDay();
+        if ($request->input('period')) {
+            $period = $request->input('period');
         } else {
-            $startOfPeriod = $now->copy()->subMonthNoOverflow()->day(28);
-            $endOfPeriod = $now->copy()->day(27)->endOfDay();
+            $now = now();
         }
 
+
+        // Periode bulan berjalan: 1 s/d akhir bulan
+        $startOfPeriod = $now->copy()->startOfMonth();
+        $endOfPeriod   = $now->copy()->endOfMonth();
+
+        // Batas "hari ini"
+        $todayStart = $now->copy()->startOfDay();
+        $todayEnd   = $now->copy()->endOfDay();
+        $yesterday = now()->subDay();
         if (Auth::user()->role === 'admin') {
 
-            $omsetToday = Transaction::whereBetween('created_at', ["{$now->startOfDay()}", "{$now->endOfDay()}"])
+            $omsetToday = Transaction::whereBetween('created_at', ["{$todayStart}", "{$todayEnd}"])
                 ->sum('total_price');
-            $jumlahTransaksiToday = Transaction::whereBetween('created_at',  ["{$now->startOfDay()}", "{$now->endOfDay()}"])
+            $jumlahTransaksiToday = Transaction::whereBetween('created_at',  ["{$todayStart}", "{$todayEnd}"])
                 ->count();
 
             $totalTransaksiQris = Transaction::where('payment_method', 'qris')
-                ->whereBetween('created_at', ["{$now->startOfDay()}", "{$now->endOfDay()}"])
+                ->whereDate('created_at', $now->format('Y-m-d'))
                 ->sum('total_price');
 
             $totalTransaksiCash = Transaction::where('payment_method', 'cash')
-                ->whereBetween('created_at', ["{$now->startOfDay()}", "{$now->endOfDay()}"])
+                ->whereDate('created_at', $now->format('Y-m-d'))
                 ->sum('total_price');
 
             $omsetThisMonth = Transaction::whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
@@ -67,9 +73,9 @@ class DashboardController extends Controller
                 ->orderBy('date', 'asc')
                 ->get();
             //now -1day
-            $yesterday = now()->subDay();
 
-            $transactions = Transaction::whereDate('created_at', $yesterday)->get();
+
+            $transactions = Transaction::whereDate('created_at', $now->format('Y-m-d'))->get();
 
             $transactions->load([
                 'details.menu',
@@ -192,7 +198,8 @@ class DashboardController extends Controller
 
 
         $absensis = Absensi::where('user_id', Auth::id())
-            ->whereBetween('tanggal', [$startOfPeriod->format('Y-m-d'), $endOfPeriod->format('Y-m-d')])
+            // ->whereBetween('tanggal', [$startOfPeriod->format('Y-m-d'), $endOfPeriod->format('Y-m-d')])
+            ->whereNull("keterangan")
             ->orderBy('tanggal', 'desc')
             ->get()
             ->map(function ($absensi) {

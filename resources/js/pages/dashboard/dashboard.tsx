@@ -1,12 +1,15 @@
 import LineBarChart from '@/components/chart/line-bar-chart';
 import { DataTable } from '@/components/data-table';
 import { Card } from '@/components/ui/card';
+import PeriodPicker from '@/components/ui/date-range';
 import formatRupiah from '@/helper/formatRupiah';
 import AppLayout from '@/layouts/app-layout';
 import { Category, OmsetChartData, TxMenu, type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
+import { useState } from 'react';
+import 'react-date-range/dist/styles.css'; // main css file
+import 'react-date-range/dist/theme/default.css'; // theme css file
 import { columns } from './columns';
-
 type DashboardProps = {
     omsetToday: string;
     jumlahTransaksiToday: string;
@@ -50,15 +53,34 @@ export default function Dashboard({
     txUnknown,
     dataOmset,
 }: DashboardProps) {
-    console.log({ txDrink, txFood, txUnknown });
+    const [range, setRange] = useState({
+        startDate: new Date(period.start),
+        endDate: new Date(period.end),
+        key: 'selection',
+    });
+    const selectionRange = {
+        startDate: range.startDate,
+        endDate: range.endDate,
+        key: 'selection',
+    };
+
+    const handleSelect = (ranges: any) => {
+        setRange({
+            startDate: ranges.selection.startDate,
+            endDate: ranges.selection.endDate,
+            key: 'selection',
+        });
+    };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <h1 className="text-1xl text-center font-bold md:text-2xl lg:text-3xl">
                 Periode: {period.start} / {period.end}
             </h1>
+            <PeriodPicker />
             <div className="flex flex-col gap-2 p-4 md:p-6 lg:p-8">
                 <h1 className="text-center text-2xl font-bold text-muted-foreground">Omset</h1>
+
                 <div className="grid auto-rows-[1fr] grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="rounded-xl border border-border dark:border-gray-700">
                         <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
@@ -116,27 +138,38 @@ export default function Dashboard({
                         </Card>
                     </div>
                 </div>
-
-                <h2 className="text-center text-2xl font-bold text-muted-foreground">Penjualan</h2>
-                <div className="flex flex-col justify-between gap-2 p-2 md:flex-row md:p-4 lg:p-6">
-                    <div className="rounded-xl dark:border-gray-700">
-                        <Card className="h-full text-center">
-                            <h2 className="text-base font-semibold text-muted-foreground">Penjualan Minuman Hari ini </h2>
-                            <p className="text-sm">Total Menu: {txDrink.length}</p>
-                            <p className="text-sm">Total Quantity: {txDrink.reduce((acc, item) => acc + item.quantity, 0)}</p>
-                            <p className="text-sm">Total Omset: {formatRupiah(txDrink.reduce((acc, item) => acc + item.total_price, 0))}</p>
-                            {txDrink.length > 0 && <DataTable columns={columns} data={txDrink} enableSearching={false} />}
-                        </Card>
-                    </div>
-                    <div className="rounded-xl dark:border-gray-700">
-                        <Card className="h-full text-center">
-                            <h2 className="text-base font-semibold text-muted-foreground">Penjualan Minuman Hari ini </h2>
-                            <p className="text-sm">Total Menu: {txFood.length}</p>
-                            <p className="text-sm">Total Quantity: {txFood.reduce((acc, item) => acc + item.quantity, 0)}</p>
-                            <p className="text-sm">Total Omset: {formatRupiah(txFood.reduce((acc, item) => acc + item.total_price, 0))}</p>
-                            {txFood.length > 0 && <DataTable columns={columns} data={txFood} enableSearching={false} />}
-                        </Card>
-                    </div>
+            </div>
+            <h2 className="text-center text-2xl font-bold text-muted-foreground">Penjualan</h2>
+            <div className="flex flex-col justify-between gap-2 p-2 md:flex-row md:p-4 lg:p-6">
+                <div className="rounded-xl dark:border-gray-700">
+                    <Card className="h-full text-center">
+                        <h2 className="text-base font-semibold text-muted-foreground">Penjualan Minuman Hari ini </h2>
+                        <div className="flex justify-center gap-2">
+                            <Card className="px-2 text-sm">
+                                Total Cup Regular:
+                                {txDrink.filter((item) => item.menu.includes('Reguler')).reduce((acc, item) => acc + item.quantity, 0)}
+                            </Card>
+                            <Card className="px-2 text-sm">
+                                Total Cup Large: {txDrink.filter((item) => item.menu.includes('Large')).reduce((acc, item) => acc + item.quantity, 0)}
+                            </Card>
+                        </div>
+                        <div className="flex justify-center gap-2">
+                            <Card className="px-2 text-sm">Total Quantity: {txDrink.reduce((acc, item) => acc + item.quantity, 0)}</Card>
+                            <Card className="px-2 text-sm">
+                                Total Omset: {formatRupiah(txDrink.reduce((acc, item) => acc + item.total_price, 0))}
+                            </Card>
+                        </div>
+                        {txDrink.length > 0 && <DataTable columns={columns} data={txDrink} enableSearching={false} />}
+                    </Card>
+                </div>
+                <div className="rounded-xl dark:border-gray-700">
+                    <Card className="h-full text-center">
+                        <h2 className="text-base font-semibold text-muted-foreground">Penjualan Minuman Hari ini </h2>
+                        <p className="text-sm">Total Menu: {txFood.length}</p>
+                        <p className="text-sm">Total Quantity: {txFood.reduce((acc, item) => acc + item.quantity, 0)}</p>
+                        <p className="text-sm">Total Omset: {formatRupiah(txFood.reduce((acc, item) => acc + item.total_price, 0))}</p>
+                        {txFood.length > 0 && <DataTable columns={columns} data={txFood} enableSearching={false} />}
+                    </Card>
                 </div>
             </div>
             <div className="flex gap-2 p-4 md:p-6 lg:p-8">
