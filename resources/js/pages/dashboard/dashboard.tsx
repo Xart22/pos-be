@@ -1,12 +1,11 @@
 import LineBarChart from '@/components/chart/line-bar-chart';
 import { DataTable } from '@/components/data-table';
+import PeriodPicker from '@/components/date-range';
 import { Card } from '@/components/ui/card';
-import PeriodPicker from '@/components/ui/date-range';
 import formatRupiah from '@/helper/formatRupiah';
 import AppLayout from '@/layouts/app-layout';
 import { Category, OmsetChartData, TxMenu, type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { useState } from 'react';
 import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import { columns } from './columns';
@@ -28,6 +27,7 @@ type DashboardProps = {
     txFood: TxMenu[];
     txUnknown: TxMenu[];
     dataOmset: OmsetChartData[];
+    dataOmsetLastMonth: OmsetChartData[];
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -52,31 +52,12 @@ export default function Dashboard({
     txFood,
     txUnknown,
     dataOmset,
+    dataOmsetLastMonth,
 }: DashboardProps) {
-    const [range, setRange] = useState({
-        startDate: new Date(period.start),
-        endDate: new Date(period.end),
-        key: 'selection',
-    });
-    const selectionRange = {
-        startDate: range.startDate,
-        endDate: range.endDate,
-        key: 'selection',
-    };
-
-    const handleSelect = (ranges: any) => {
-        setRange({
-            startDate: ranges.selection.startDate,
-            endDate: ranges.selection.endDate,
-            key: 'selection',
-        });
-    };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
-            <h1 className="text-1xl text-center font-bold md:text-2xl lg:text-3xl">
-                Periode: {period.start} / {period.end}
-            </h1>
+
             <PeriodPicker />
             <div className="flex flex-col gap-2 p-4 md:p-6 lg:p-8">
                 <h1 className="text-center text-2xl font-bold text-muted-foreground">Omset</h1>
@@ -174,10 +155,12 @@ export default function Dashboard({
             </div>
             <div className="flex gap-2 p-4 md:p-6 lg:p-8">
                 <Card className="h-96 w-full p-4">
+                    <h2 className="text-base font-semibold text-muted-foreground">Omset Bulan Ini</h2>
                     <LineBarChart data={dataOmset} />
                 </Card>
                 <Card className="w-full p-4">
-                    <LineBarChart data={dataOmset} />
+                    <h2 className="text-base font-semibold text-muted-foreground">Omset Bulan Lalu</h2>
+                    <LineBarChart data={dataOmsetLastMonth} />
                 </Card>
             </div>
         </AppLayout>

@@ -72,7 +72,15 @@ class DashboardController extends Controller
                 ->groupBy('date')
                 ->orderBy('date', 'asc')
                 ->get();
-            //now -1day
+
+            $dataOmsetLastMonth = Transaction::whereBetween('created_at', [
+                $startOfPeriod->copy()->subMonth(),
+                $endOfPeriod->copy()->subMonth(),
+            ])
+                ->selectRaw('DATE(created_at) as date, SUM(total_price) as Omset')
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->get();
 
 
             $transactions = Transaction::whereDate('created_at', $now->format('Y-m-d'))->get();
@@ -190,6 +198,7 @@ class DashboardController extends Controller
                 ],
                 'categories' => $categories,
                 'dataOmset' => $dataOmset,
+                'dataOmsetLastMonth' => $dataOmsetLastMonth,
                 'txDrink' => $transDrink,
                 'txFood' => $transFood,
                 'txUnknown' => $transUnknown,
@@ -198,8 +207,7 @@ class DashboardController extends Controller
 
 
         $absensis = Absensi::where('user_id', Auth::id())
-            // ->whereBetween('tanggal', [$startOfPeriod->format('Y-m-d'), $endOfPeriod->format('Y-m-d')])
-            ->whereNull("keterangan")
+            ->whereBetween('tanggal', [$startOfPeriod->format('Y-m-d'), $endOfPeriod->format('Y-m-d')])
             ->orderBy('tanggal', 'desc')
             ->get()
             ->map(function ($absensi) {

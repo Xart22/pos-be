@@ -1,9 +1,8 @@
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, CircleDollarSign, Folder, LayoutGrid, Utensils } from 'lucide-react';
+import { CircleDollarSign, LayoutGrid, User, Utensils } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems = [
@@ -11,10 +10,17 @@ const mainNavItems = [
         title: 'Dashboard',
         url: '/dashboard',
         icon: LayoutGrid,
+        isAdmin: false,
+    },
+    {
+        title: 'Users',
+        url: '/users',
+        icon: User,
+        isAdmin: true,
     },
     {
         title: 'Master Data',
-        url: '#',
+        isAdmin: false,
         icon: Utensils,
         items: [
             {
@@ -40,14 +46,14 @@ const mainNavItems = [
             {
                 title: 'Recipes',
                 url: '/master-data/recipes',
-                isAdmin: false,
+                isAdmin: true,
             },
         ],
     },
     {
         title: 'CashFlow',
-        url: '#',
         icon: CircleDollarSign,
+        isAdmin: true,
         items: [
             {
                 title: 'Cash In',
@@ -59,20 +65,12 @@ const mainNavItems = [
                 url: '/cash-flow/cash-out',
                 isAdmin: true,
             },
+            {
+                title: 'Operational',
+                url: '/cash-flow/operational',
+                isAdmin: true,
+            },
         ],
-    },
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
     },
 ];
 

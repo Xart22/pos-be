@@ -127,3 +127,12 @@ export interface OmsetChartData {
         omset: number;
     };
 }
+export interface Operational {
+    id: number;
+    name: string;
+    harga: number;
+    deskripsi?: string; // Optional field
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown; // This allows for additional properties...
+}
