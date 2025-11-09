@@ -123,7 +123,7 @@ export default function Dashboard({
             <h2 className="text-center text-2xl font-bold text-muted-foreground">Penjualan</h2>
             <div className="flex flex-col justify-between gap-2 p-2 md:flex-row md:p-4 lg:p-6">
                 <div className="rounded-xl dark:border-gray-700">
-                    <Card className="h-full text-center">
+                    <Card className="h-full p-3 text-center">
                         <h2 className="text-base font-semibold text-muted-foreground">Penjualan Minuman Hari ini </h2>
                         <div className="flex justify-center gap-2">
                             <Card className="px-2 text-sm">
@@ -144,8 +144,8 @@ export default function Dashboard({
                     </Card>
                 </div>
                 <div className="rounded-xl dark:border-gray-700">
-                    <Card className="h-full text-center">
-                        <h2 className="text-base font-semibold text-muted-foreground">Penjualan Minuman Hari ini </h2>
+                    <Card className="h-full p-3 text-center">
+                        <h2 className="text-base font-semibold text-muted-foreground">Penjualan Makanan Hari ini </h2>
                         <p className="text-sm">Total Menu: {txFood.length}</p>
                         <p className="text-sm">Total Quantity: {txFood.reduce((acc, item) => acc + item.quantity, 0)}</p>
                         <p className="text-sm">Total Omset: {formatRupiah(txFood.reduce((acc, item) => acc + item.total_price, 0))}</p>

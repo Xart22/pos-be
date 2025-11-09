@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BahanBakuController;
 use App\Http\Controllers\CashInController;
+use App\Http\Controllers\CashOutController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\OperationalController;
@@ -33,6 +34,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/cash-flow/cash-in', [CashInController::class, 'index'])
         ->name('cash-in.index');
+
+    Route::get('/cash-flow/cash-out', [CashOutController::class, 'index'])
+        ->name('cash-out.index');
 
     Route::get('/cash-flow/operational', [OperationalController::class, 'index'])
         ->name('operational.index');

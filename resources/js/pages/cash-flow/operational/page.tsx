@@ -59,10 +59,10 @@ export default function OperationalPage({ operationals }: OperationalProps) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Bahan Baku" />
+            <Head title="Operational" />
 
             <div className="flex flex-col gap-4 p-4">
-                <h1 className="text-2xl font-bold">Bahan Baku</h1>
+                <h1 className="text-2xl font-bold">Operational</h1>
 
                 {/* === Form Input Bahan Baku Baru === */}
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-xl border bg-white p-4 shadow-sm dark:bg-gray-900">

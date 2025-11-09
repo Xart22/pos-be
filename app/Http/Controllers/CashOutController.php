@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BahanBaku;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class CashOutController extends Controller
 {
@@ -11,7 +13,10 @@ class CashOutController extends Controller
      */
     public function index()
     {
-        //
+        $bahanBaku = BahanBaku::all();
+        return Inertia::render('cash-flow/cash-out/page', [
+            'bahanBaku' => $bahanBaku,
+        ]);
     }
 
     /**
