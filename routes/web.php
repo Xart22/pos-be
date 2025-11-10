@@ -29,6 +29,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/master-data/bahan-baku', [BahanBakuController::class, 'index'])
         ->name('bahan-baku.index');
 
+    Route::post('/master-data/bahan-baku', [BahanBakuController::class, 'store'])
+        ->name('bahan-baku.store');
+
     Route::get('/master-data/recipes', [RecipeController::class, 'index'])
         ->name('recipes.index');
 

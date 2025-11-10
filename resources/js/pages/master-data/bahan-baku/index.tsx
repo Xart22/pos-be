@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { BahanBaku, BreadcrumbItem } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -52,9 +52,7 @@ export default function BahanBakuPage({ bahanBakus }: BahanBakuProps) {
     const onSubmit = async (data: FormValues) => {
         setLoading(true);
         try {
-            // TODO: Ganti dengan request ke backend
-            console.log('Data dikirim:', data);
-            // reset form setelah submit
+            router.post('/master-data/bahan-baku', data);
             reset();
         } catch (error) {
             console.error('Gagal kirim:', error);
@@ -133,7 +131,7 @@ export default function BahanBakuPage({ bahanBakus }: BahanBakuProps) {
                 {/* === Table Daftar Bahan Baku === */}
                 <div className="mt-6 rounded-xl border border-border">
                     <div className="px-4 py-8 md:px-8">
-                        <DataTable columns={columns} data={bahanBakus} filterColumn={['kode', 'name', 'satuan']} />
+                        <DataTable columns={columns} data={bahanBakus} filterColumn={['kode', 'name', 'satuan']} enableSearching />
                     </div>
                 </div>
             </div>

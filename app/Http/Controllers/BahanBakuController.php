@@ -23,7 +23,9 @@ class BahanBakuController extends Controller
 
     public function store(Request $request)
     {
-        // Menyimpan bahan baku baru ke dalam database
+
+        BahanBaku::create($request->all());
+        return redirect()->route('bahan-baku.index')->with('success', 'Bahan baku berhasil ditambahkan.');
     }
 
     public function show($id)
