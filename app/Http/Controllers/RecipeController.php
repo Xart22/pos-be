@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BahanBaku;
+use App\Models\Menu;
 use App\Models\Recipe;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -11,11 +13,17 @@ class RecipeController extends Controller
     public function index()
     {
         $recipes = Recipe::with(['bahanBakus', 'menu'])->get();
+        $bahanBakus = BahanBaku::all();
 
+        $menus = Menu::whereNotIn('id', function ($query) {
+            $query->select('menu_id')->from('recipes');
+        })->get();
 
         // Logic to retrieve and display recipes
         return Inertia::render('master-data/recipes/index', [
             'recipes' => $recipes,
+            'bahanBaku' => $bahanBakus,
+            'menus' => $menus,
         ]);
     }
 
