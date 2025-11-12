@@ -39,4 +39,10 @@ export const columns: ColumnDef<BahanBaku>[] = [
         cell: ({ row }) => <div className="w-[80px]">{row.getValue('satuan')}</div>,
         enableSorting: true,
     },
+    {
+        accessorKey: 'per_unit',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Per Unit" />,
+        cell: ({ row }) => <div className="w-[80px]">{row.getValue('per_unit')}</div>,
+        enableSorting: true,
+    },
 ];

@@ -45,6 +45,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/master-data/recipes', [RecipeController::class, 'store'])
         ->name('recipes.store');
 
+
+    Route::put('/master-data/recipes/{id}', [RecipeController::class, 'update'])
+        ->name('recipes.update');
+
     Route::get('/cash-flow/cash-in', [CashInController::class, 'index'])
         ->name('cash-in.index');
 

@@ -6,6 +6,7 @@ import { Recipe } from '@/types';
 export const columns: ColumnDef<Recipe>[] = [
     {
         accessorFn: (row) => row.menu?.name,
+        accessorKey: 'menu_name',
         id: 'menu_name',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Menu" />,
         cell: ({ getValue }) => <div className="w-[120px]">{getValue() as string}</div>,
@@ -16,7 +17,7 @@ export const columns: ColumnDef<Recipe>[] = [
         id: 'instructions',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Instructions" />,
         cell: ({ row }) => <div className="w-[80px]">{row.getValue('instructions')}</div>,
-        enableSorting: true,
+        enableSorting: false,
     },
 
     {

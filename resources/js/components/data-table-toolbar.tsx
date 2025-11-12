@@ -17,18 +17,19 @@ export function DataTableToolbar<TData>({
     placeholder = 'Search...',
     showResetButton = true,
 }: DataTableToolbarProps<TData>) {
-    const currentValue = (table.getColumn(filterColumns[0])?.getFilterValue() as string) ?? '';
+    // Gunakan global filter value
+    const globalFilter = table.getState().globalFilter ?? '';
 
-    const isFiltered = table.getState().columnFilters.length > 0;
+    const isFiltered = table.getState().columnFilters.length > 0 || globalFilter !== '';
 
     const handleChange = (value: string) => {
-        filterColumns.forEach((col) => {
-            console.log(`Setting filter for column: ${col} with value: ${value}`);
-            const column = table.getColumn(col);
-            if (column) {
-                column.setFilterValue(value);
-            }
-        });
+        // Set global filter yang akan mencari di semua kolom yang ditentukan
+        table.setGlobalFilter(value);
+    };
+
+    const handleReset = () => {
+        table.setGlobalFilter('');
+        table.resetColumnFilters();
     };
 
     return (
@@ -36,12 +37,12 @@ export function DataTableToolbar<TData>({
             <div className="flex flex-1 items-center space-x-2">
                 <Input
                     placeholder={placeholder}
-                    value={currentValue}
+                    value={globalFilter}
                     onChange={(e) => handleChange(e.target.value)}
                     className="h-8 w-[150px] lg:w-[250px]"
                 />
                 {isFiltered && showResetButton && (
-                    <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">
+                    <Button variant="ghost" onClick={handleReset} className="h-8 px-2 lg:px-3">
                         Reset
                         <X className="ml-1 h-4 w-4" />
                     </Button>

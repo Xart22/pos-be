@@ -17,9 +17,7 @@ class RecipeController extends Controller
         $recipes = Recipe::with(['bahanBakus', 'menu'])->get();
         $bahanBakus = BahanBaku::all();
 
-        $menus = Menu::whereNotIn('id', function ($query) {
-            $query->select('menu_id')->from('recipes');
-        })->get();
+        $menus = Menu::all();
 
         // Logic to retrieve and display recipes
         return Inertia::render('master-data/recipes/index', [
@@ -79,7 +77,38 @@ class RecipeController extends Controller
 
     public function update(Request $request, $id)
     {
-        // Logic to update an existing recipe
+        // Logic to update a recipe
+        $data = $request->validate([
+            'rows' => 'required|array|min:1',
+            'rows.*.ingredien_id' => 'required|exists:bahan_bakus,id',
+            'rows.*.quantity' => 'required|numeric|min:0',
+            'rows.*.unit' => 'required|string',
+            'instruction' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            $recipe = Recipe::findOrFail($id);
+            $recipe->update([
+                'instructions' => $data['instruction'] ?? '',
+            ]);
+            // Hapus bahan lama
+            Bahan::where('recipe_id', $recipe->id)->delete();
+            // Tambah bahan baru
+            foreach ($data['rows'] as $row) {
+                Bahan::create([
+                    'recipe_id' => $recipe->id,
+                    'bahan_baku_id' => $row['ingredien_id'],
+                    'jumlah' => $row['quantity'],
+                    'satuan' => $row['unit'],
+                ]);
+            }
+            DB::commit();
+            return redirect()->route('recipes.index')->with('success', 'Recipe updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('recipes.index')->with('error', 'Failed to update recipe: ' . $e->getMessage());
+        }
     }
 
     public function destroy($id)

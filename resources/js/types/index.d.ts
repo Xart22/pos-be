@@ -55,6 +55,19 @@ export interface Menu {
     stock: number;
     is_active: boolean;
     is_online: boolean;
+    variants: {
+        id: number;
+        position: number;
+        variant: {
+            id: number;
+            name: string;
+            options: {
+                id: number;
+                name: string;
+                price: number;
+            };
+        }[];
+    };
     [key: string]: unknown; // This allows for additional properties...
 }
 
@@ -88,6 +101,7 @@ export interface BahanBaku {
     stock: number;
     satuan: string;
     deskripsi?: string; // Optional field
+    per_unit: number;
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
@@ -108,8 +122,7 @@ export interface Bahan {
 export interface Recipe {
     id: number;
     menu_id: number;
-    intructions: string;
-    image?: string;
+    instructions: string;
     bahan_bakus: Bahan[];
     menu: Menu;
 }

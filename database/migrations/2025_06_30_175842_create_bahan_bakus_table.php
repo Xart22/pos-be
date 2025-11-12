@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('kode')->unique();
             $table->string('name');
             $table->bigInteger('harga');
+            $table->bigInteger('per_unit');
             $table->integer('stock')->default(0);
             $table->string('satuan')->nullable();
             $table->text('deskripsi')->nullable();

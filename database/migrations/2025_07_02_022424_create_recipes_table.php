@@ -17,7 +17,7 @@ return new class extends Migration
                 ->constrained('menus')
                 ->onDelete('cascade')->nullable();
             $table->text('instructions')->nullable();
-            $table->string('image')->nullable();
+            $table->string('variant')->nullable();
             $table->timestamps();
         });
     }
