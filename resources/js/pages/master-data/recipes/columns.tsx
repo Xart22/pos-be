@@ -18,16 +18,7 @@ export const columns: ColumnDef<Recipe>[] = [
         cell: ({ row }) => <div className="w-[80px]">{row.getValue('instructions')}</div>,
         enableSorting: true,
     },
-    {
-        accessorKey: 'image',
-        id: 'image',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Image" />,
-        cell: ({ row }) => {
-            const imageUrl = row.getValue('image') as string;
-            return <div className="w-[80px]">{imageUrl ? <img src={imageUrl} alt="Recipe" className="h-10 w-10 rounded-full" /> : 'No Image'}</div>;
-        },
-        enableSorting: false,
-    },
+
     {
         accessorFn: (row) =>
             row.bahan_bakus?.map((bahan) => ({

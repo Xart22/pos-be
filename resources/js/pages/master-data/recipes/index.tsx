@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { BahanBaku, BreadcrumbItem, Menu, Recipe } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useMemo } from 'react';
 import type { Resolver } from 'react-hook-form';
 import { useFieldArray, useForm } from 'react-hook-form';
@@ -24,7 +24,7 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Recipes', href: '/master-data/r
 
 // ---- Zod schemas
 const rowSchema = z.object({
-    ingredienId: z.number({ error: 'Ingredient wajib diisi' }),
+    ingredien_id: z.number({ error: 'Ingredient wajib diisi' }),
     quantity: z.coerce.number().min(0.0001, { error: 'Quantity harus > 0' }),
     unit: z.string().min(1, { error: 'Unit wajib diisi' }),
 });
@@ -32,8 +32,7 @@ const rowSchema = z.object({
 const formSchema = z.object({
     rows: z.array(rowSchema).min(1, { error: 'Minimal satu baris resep' }),
     instruction: z.string().optional().default(''),
-    menuId: z.number().optional(),
-    menuName: z.string({ error: 'Menu wajib diisi' }),
+    menu_id: z.number().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -56,14 +55,14 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema) as Resolver<FormValues>,
         defaultValues: {
-            rows: [{ ingredienId: undefined, quantity: 0, unit: '' }],
+            rows: [{ ingredien_id: undefined, quantity: 0, unit: '' }],
             instruction: '',
-            menuId: undefined,
+            menu_id: undefined,
         },
         mode: 'onChange',
     });
 
-    const { control, handleSubmit, setValue, watch } = form;
+    const { control, handleSubmit, setValue } = form;
 
     const { fields, append, remove } = useFieldArray({
         control,
@@ -73,7 +72,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
     const thead: string[] = ['#', 'Ingredient', 'Quantity', 'Unit', 'Actions'];
 
     const onIngredientChange = (rowIndex: number, newIngredient: any) => {
-        setValue(`rows.${rowIndex}.ingredienId`, newIngredient);
+        setValue(`rows.${rowIndex}.ingredien_id`, newIngredient);
 
         // Cek kecocokan unik untuk set unit
         const selectedBahan = bahanBaku.find((b) => b.id === newIngredient);
@@ -87,7 +86,12 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
     };
 
     const onSubmit = (data: FormValues) => {
-        console.log('Submit data:', data);
+        router.post('/master-data/recipes', data, {
+            preserveScroll: true,
+            onSuccess: () => {
+                form.reset();
+            },
+        });
     };
 
     return (
@@ -102,7 +106,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
                         {/* Menu selector */}
                         <FormField
                             control={control}
-                            name="menuId"
+                            name="menu_id"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Menu</FormLabel>
@@ -153,7 +157,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
                                             <td className="px-3 py-2">
                                                 <FormField
                                                     control={control}
-                                                    name={`rows.${index}.ingredienId`}
+                                                    name={`rows.${index}.ingredien_id`}
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <FormControl>
@@ -240,7 +244,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
 
                         {/* Actions rows */}
                         <div className="flex items-center gap-2">
-                            <Button type="button" onClick={() => append({ ingredienId: NaN, quantity: 0, unit: '' })}>
+                            <Button type="button" onClick={() => append({ ingredien_id: NaN, quantity: 0, unit: '' })}>
                                 Add Row
                             </Button>
                             <Button

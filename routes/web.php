@@ -32,8 +32,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/master-data/bahan-baku', [BahanBakuController::class, 'store'])
         ->name('bahan-baku.store');
 
+    Route::put('/master-data/bahan-baku/{kode}', [BahanBakuController::class, 'update'])
+        ->name('bahan-baku.update');
+
+    Route::delete('/master-data/bahan-baku/{kode}', [BahanBakuController::class, 'destroy'])
+        ->name('bahan-baku.destroy');
+
+
     Route::get('/master-data/recipes', [RecipeController::class, 'index'])
         ->name('recipes.index');
+
+    Route::post('/master-data/recipes', [RecipeController::class, 'store'])
+        ->name('recipes.store');
 
     Route::get('/cash-flow/cash-in', [CashInController::class, 'index'])
         ->name('cash-in.index');

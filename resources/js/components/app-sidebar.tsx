@@ -41,12 +41,12 @@ const mainNavItems = [
             {
                 title: 'Bahan Baku',
                 url: '/master-data/bahan-baku',
-                isAdmin: true,
+                isAdmin: false,
             },
             {
                 title: 'Recipes',
                 url: '/master-data/recipes',
-                isAdmin: true,
+                isAdmin: false,
             },
         ],
     },

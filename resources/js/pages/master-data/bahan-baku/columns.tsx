@@ -39,11 +39,4 @@ export const columns: ColumnDef<BahanBaku>[] = [
         cell: ({ row }) => <div className="w-[80px]">{row.getValue('satuan')}</div>,
         enableSorting: true,
     },
-
-    {
-        accessorKey: 'deskripsi',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Deskripsi" />,
-        cell: ({ row }) => <div className="w-[80px]">{row.getValue('deskripsi')}</div>,
-        enableSorting: false,
-    },
 ];

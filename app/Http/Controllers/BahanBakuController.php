@@ -41,11 +41,16 @@ class BahanBakuController extends Controller
 
     public function update(Request $request, $id)
     {
-        // Memperbarui bahan baku yang ada di dalam database
+        $bahanBaku = BahanBaku::where('kode', $id)->firstOrFail();
+        $bahanBaku->update($request->all());
+        return redirect()->route('bahan-baku.index')->with('success', 'Bahan baku berhasil diperbarui.');
     }
 
     public function destroy($id)
     {
-        // Menghapus bahan baku dari database
+        // Menghapus bahan baku berdasarkan ID
+        $bahanBaku = BahanBaku::where('kode', $id)->firstOrFail();
+        $bahanBaku->delete();
+        return redirect()->route('bahan-baku.index')->with('success', 'Bahan baku berhasil dihapus.');
     }
 }

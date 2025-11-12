@@ -18,11 +18,11 @@ export function AlertNotif({ duration = 3500 }: { duration?: number }) {
         setLocal({ success: flash?.success, error: flash?.error });
 
         // auto-dismiss jika ada salah satu pesan
-        if (flash?.success || flash?.error) {
-            const t = setTimeout(() => setLocal({}), duration);
-            return () => clearTimeout(t);
-        }
-    }, [flash, duration]);
+        // if (flash?.success || flash?.error) {
+        //     const t = setTimeout(() => setLocal({}), duration);
+        //     return () => clearTimeout(t);
+        // }
+    }, [flash]);
 
     const close = () => setLocal({});
 
