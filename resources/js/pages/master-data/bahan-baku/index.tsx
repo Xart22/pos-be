@@ -89,6 +89,9 @@ export default function BahanBakuPage({ bahanBakus }: BahanBakuProps) {
         setEditMode(true);
         setEditingId(bb.kode ?? null);
 
+        //scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
         // Reset dengan data yang akan diedit
         reset({
             kode: bb.kode ?? '',
