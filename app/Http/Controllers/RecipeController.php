@@ -6,6 +6,7 @@ use App\Models\Bahan;
 use App\Models\BahanBaku;
 use App\Models\Menu;
 use App\Models\Recipe;
+use App\Models\VariantOption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -16,6 +17,7 @@ class RecipeController extends Controller
     {
         $recipes = Recipe::with(['bahanBakus', 'menu'])->get();
         $bahanBakus = BahanBaku::all();
+        $variantOptions = VariantOption::where("price", ">", 0)->get();
 
         $menus = Menu::all();
 
@@ -24,6 +26,7 @@ class RecipeController extends Controller
             'recipes' => $recipes,
             'bahanBaku' => $bahanBakus,
             'menus' => $menus,
+            'variantOptions' => $variantOptions,
         ]);
     }
 

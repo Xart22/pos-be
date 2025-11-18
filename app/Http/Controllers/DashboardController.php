@@ -28,8 +28,14 @@ class DashboardController extends Controller
 
 
         // Periode bulan berjalan: 1 s/d akhir bulan
-        $startOfPeriod = $now->copy()->startOfMonth();
-        $endOfPeriod   = $now->copy()->endOfMonth();
+        // $startOfPeriod = $now->copy()->startOfMonth();
+        // $endOfPeriod   = $now->copy()->endOfMonth();
+
+        $startOfPeriod = "2025-11-16";
+        $endOfPeriod   = "2025-11-16";
+
+        $startOfPeriod = \Carbon\Carbon::parse($startOfPeriod)->startOfDay();
+        $endOfPeriod = \Carbon\Carbon::parse($endOfPeriod)->endOfDay();
 
         // Batas "hari ini"
         $todayStart = $now->copy()->startOfDay();
@@ -83,7 +89,11 @@ class DashboardController extends Controller
                 ->get();
 
 
-            $transactions = Transaction::whereDate('created_at', $now->format('Y-m-d'))->get();
+            // $transactions = Transaction::whereDate('created_at', $now->format('Y-m-d'))->get();
+            $transactions = Transaction::whereBetween('created_at', [
+                $startOfPeriod->copy()->subMonth(),
+                $endOfPeriod->copy()->subMonth(),
+            ])->get();
 
             $transactions->load([
                 'details.menu',
@@ -135,7 +145,11 @@ class DashboardController extends Controller
                     $drinkKey = $variantNames
                         ? $baseKey . ' - ' . implode(', ', $variantNames)
                         : $baseKey;
-
+                    if (str_contains(strtolower($drinkKey), 'large')) {
+                        $drinkKey = $baseKey . " - L";
+                    } else if (str_contains(strtolower($drinkKey), 'reguler')) {
+                        $drinkKey = $baseKey . " - R";
+                    }
                     // Normalized row (sekali bikin, nanti tinggal ditambah kuantitas & total)
                     $row = [
                         'menu'          => $baseKey,
