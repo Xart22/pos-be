@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\OperationalController;
 use App\Http\Controllers\RecipeController;
+use App\Http\Controllers\StockOpnameController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -57,6 +58,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/cash-flow/operational', [OperationalController::class, 'index'])
         ->name('operational.index');
+
+
+    Route::get('/stock-opname/{start?}/{end?}', [StockOpnameController::class, 'index'])
+        ->name('stock-opname.index');
 });
 
 require __DIR__ . '/settings.php';

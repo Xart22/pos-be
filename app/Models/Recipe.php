@@ -19,4 +19,10 @@ class Recipe extends Model
     {
         return $this->belongsTo(Menu::class);
     }
+
+
+    public function variantOption()
+    {
+        return $this->belongsTo(VariantOption::class, 'variant_options_id');
+    }
 }

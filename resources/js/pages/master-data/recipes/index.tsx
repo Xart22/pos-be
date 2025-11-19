@@ -1,3 +1,10 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useCallback, useMemo, useState } from 'react';
+import { Resolver, useFieldArray, useForm } from 'react-hook-form';
+import Select from 'react-select';
+import { z } from 'zod';
+
 import { DataTable } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -6,97 +13,155 @@ import { Textarea } from '@/components/ui/textarea';
 import formatRupiah from '@/helper/formatRupiah';
 import AppLayout from '@/layouts/app-layout';
 import { BahanBaku, BreadcrumbItem, Menu, Recipe, SharedData } from '@/types';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Head, router, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
-import { Resolver, useFieldArray, useForm } from 'react-hook-form';
-import Select from 'react-select';
-import { z } from 'zod';
 import { columns as baseColumns } from './columns';
 
 type RecipesProps = {
     recipes: Recipe[];
     bahanBaku: BahanBaku[];
     menus: Menu[];
+    variantOptions: { id: number; name: string; price: number }[];
 };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Recipes', href: '/master-data/recipes' }];
 
-type RowValue = { ingredien_id: number; quantity: number; unit: string };
-type FormValues = {
-    rows: RowValue[];
-    instruction?: string;
-    menu_id: number;
-};
-
 // ==== Schema
 const rowSchema = z.object({
-    ingredien_id: z.number({ error: 'Ingredient wajib diisi' }),
-    quantity: z.coerce.number().min(0.0001, { error: 'Quantity harus > 0' }),
-    unit: z.string().min(1, { error: 'Unit wajib diisi' }),
+    ingredien_id: z
+        .number({
+            error: 'Ingredient wajib diisi',
+        })
+        .min(1, { message: 'Ingredient wajib dipilih' }),
+    quantity: z.coerce
+        .number({
+            error: 'Quantity harus berupa angka',
+        })
+        .gt(0, { message: 'Quantity harus > 0' }),
+    unit: z
+        .string({
+            error: 'Unit wajib diisi',
+        })
+        .min(1, { message: 'Unit wajib diisi' }),
 });
+
 const formSchema = z.object({
-    rows: z.array(rowSchema).min(1, { error: 'Minimal satu baris resep' }),
+    menu_id: z
+        .number({
+            error: 'Menu wajib dipilih',
+        })
+        .min(1, { message: 'Menu wajib dipilih' }),
+    variant_id: z.number().optional(),
     instruction: z.string().optional().default(''),
-    menu_id: z.number({ error: 'Menu wajib dipilih' }),
+    rows: z.array(rowSchema).min(1, { message: 'Minimal satu baris resep' }),
 });
 
-const defaultValues: FormValues = {
-    rows: [{ ingredien_id: undefined as unknown as number, quantity: 1, unit: '' }],
-    instruction: '',
-    menu_id: undefined as unknown as number,
-};
+type FormValues = z.infer<typeof formSchema>;
 
-export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps) {
+const createDefaultValues = (): FormValues => ({
+    menu_id: 0, // invalid sampai user pilih menu
+    variant_id: undefined,
+    instruction: '',
+    rows: [
+        {
+            ingredien_id: 0,
+            quantity: 1,
+            unit: '',
+        },
+    ],
+});
+
+export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions }: RecipesProps) {
     const { auth } = usePage<SharedData>().props;
 
-    // ==== Options
-    const ingredientOptions = useMemo(() => bahanBaku.map((b) => ({ label: b.name, value: b.id })), [bahanBaku]);
-    const unitOptions = useMemo(
+    // ==== Options (memoized)
+    const ingredientOptions = useMemo(
         () =>
-            Array.from(new Set(bahanBaku.map((b) => b.satuan).filter((u): u is string => typeof u === 'string' && u.trim().length > 0))).map((u) => ({
-                label: u,
-                value: u,
+            bahanBaku.map((b) => ({
+                label: b.name,
+                value: b.id,
             })),
         [bahanBaku],
     );
 
-    const menuOptions = useMemo(() => {
-        const usedMenuIds = new Set(recipes.map((r) => r.menu_id));
-        return menus.filter((m) => !usedMenuIds.has(m.id)).map((m) => ({ label: m.name, value: m.id }));
-    }, [menus, recipes]);
+    const unitOptions = useMemo(() => {
+        const units = Array.from(new Set(bahanBaku.map((b) => b.satuan).filter((u): u is string => typeof u === 'string' && u.trim().length > 0)));
+
+        return units.map((u) => ({
+            label: u,
+            value: u,
+        }));
+    }, [bahanBaku]);
+
+    const menuOptions = useMemo(
+        () =>
+            menus.map((m) => ({
+                label: m.name,
+                value: m.id,
+            })),
+        [menus],
+    );
+
+    const isAdmin = useMemo(() => {
+        const role = auth.user?.role;
+        if (!role) return false;
+
+        if (typeof role === 'string') {
+            return role.toLowerCase().includes('admin');
+        }
+
+        // kalau role object, misalnya { name: 'Admin' }
+        const name = (role as any).name ?? '';
+        return String(name).toLowerCase().includes('admin');
+    }, [auth.user]);
 
     // ==== Form
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema) as Resolver<FormValues>,
         mode: 'onChange',
-        defaultValues,
+        defaultValues: createDefaultValues(),
     });
 
-    const { control, handleSubmit, reset } = form;
-    const { fields, append, remove, replace } = useFieldArray({ control, name: 'rows' });
+    const { control, handleSubmit, reset, watch } = form;
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: 'rows',
+    });
 
     const [editMode, setEditMode] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
 
     const thead: string[] = ['#', 'Ingredient', 'Quantity', 'Unit', 'Actions'];
 
+    const watchedMenuId = watch('menu_id');
+    const selectedMenu = useMemo(() => menus.find((m) => m.id === Number(watchedMenuId)), [menus, watchedMenuId]);
+
     // Handler reset
-    const handleReset = () => {
-        reset(defaultValues);
+    const handleReset = useCallback(() => {
+        reset(createDefaultValues());
         setEditMode(false);
         setEditingId(null);
-    };
+    }, [reset]);
 
     // ==== Submit
     const onSubmit = (data: FormValues) => {
+        const payload: FormValues = {
+            ...data,
+            // Pastikan menu_id & ingredien_id yang default 0 tidak lolos
+            menu_id: Number(data.menu_id),
+            variant_id: data.variant_id ? Number(data.variant_id) : undefined,
+            rows: data.rows.map((r) => ({
+                ...r,
+                ingredien_id: Number(r.ingredien_id),
+                quantity: Number(r.quantity),
+            })),
+        };
+
         if (editMode && editingId != null) {
-            router.put(`/master-data/recipes/${editingId}`, data, {
+            router.put(`/master-data/recipes/${editingId}`, payload, {
                 preserveScroll: true,
                 onSuccess: handleReset,
             });
         } else {
-            router.post('/master-data/recipes', data, {
+            router.post('/master-data/recipes', payload, {
                 preserveScroll: true,
                 onSuccess: handleReset,
             });
@@ -104,45 +169,68 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
     };
 
     // Handler edit
-    const handleEdit = (recipe: Recipe) => {
-        setEditMode(true);
-        setEditingId(recipe.id);
+    const handleEdit = useCallback(
+        (recipe: Recipe) => {
+            setEditMode(true);
+            setEditingId(recipe.id);
 
-        const rows: RowValue[] =
-            (recipe as any).bahan_bakus?.map((ing: any) => ({
-                ingredien_id: Number(ing.ingredien_id ?? ing.ingredient_id ?? ing.bahan_baku_id ?? ing.id),
-                quantity: Number(ing.quantity ?? ing.jumlah ?? 1),
-                unit: String(ing.unit ?? ing.satuan ?? ''),
-            })) ?? [];
+            const rawRows = (recipe as any).bahan_bakus ?? (recipe as any).bahanBakus ?? [];
 
-        reset({
-            menu_id: recipe.menu_id,
-            instruction: recipe.instructions || '',
-            rows: rows.length ? rows : [{ ingredien_id: undefined as unknown as number, quantity: 1, unit: '' }],
-        });
-    };
+            const rows =
+                rawRows.map((ing: any) => ({
+                    ingredien_id: Number(ing.ingredien_id ?? ing.ingredient_id ?? ing.bahan_baku_id ?? ing.bahanBakuId ?? ing.id),
+                    quantity: Number(ing.quantity ?? ing.jumlah ?? 1),
+                    unit: String(ing.unit ?? ing.satuan ?? ''),
+                })) ?? [];
+
+            const instructionValue = (recipe as any).instruction ?? (recipe as any).instructions ?? '';
+
+            reset({
+                menu_id: Number((recipe as any).menu_id ?? recipe.menu?.id ?? 0),
+                variant_id: (recipe as any).variant_id ? Number((recipe as any).variant_id) : undefined,
+                instruction: instructionValue,
+                rows:
+                    rows.length > 0
+                        ? rows
+                        : [
+                              {
+                                  ingredien_id: 0,
+                                  quantity: 1,
+                                  unit: '',
+                              },
+                          ],
+            });
+        },
+        [reset],
+    );
 
     // ==== Kolom + Aksi
     const columns = useMemo(() => {
         const cols = [...baseColumns];
 
         // Tambahkan kolom HPP jika admin
-        if (auth.user && auth.user.role && String(auth.user.role).toLowerCase().includes('admin')) {
+        if (isAdmin) {
             cols.push({
-                accessorFn: (row) => {
+                accessorFn: (row: any) => {
                     const bahanBakuList =
-                        row.bahan_bakus?.map((bahan) => {
-                            const computedPrice = Math.round((bahan.bahan_baku.harga / bahan.bahan_baku.per_unit) * bahan.jumlah);
+                        row.bahan_bakus?.map((bahan: any) => {
+                            const harga = Number(bahan.bahan_baku?.harga ?? 0);
+                            const perUnit = Number(bahan.bahan_baku?.per_unit ?? 1) || 1;
+                            const jumlah = Number(bahan.jumlah ?? bahan.quantity ?? 0);
+
+                            const computedPrice = Math.round((harga / perUnit) * jumlah);
+
                             return {
-                                name: bahan.bahan_baku.name,
-                                jumlah: bahan.jumlah,
+                                name: bahan.bahan_baku?.name ?? '',
+                                jumlah,
                                 satuan: bahan.satuan,
                                 price: computedPrice,
                             };
                         }) || [];
 
-                    const totalHpp = bahanBakuList.reduce((sum, bahan) => sum + (Number(bahan.price) || 0), 0);
-                    const hargaJual = Number(row.menu?.price || 0);
+                    const totalHpp = bahanBakuList.reduce((sum: number, bahan: any) => sum + (Number(bahan.price) || 0), 0);
+                    const hargaVariant = Number(row.variant_option?.price || 0);
+                    const hargaJual = Number(row.menu?.price || 0) + hargaVariant;
                     const margin = hargaJual - totalHpp;
                     const marginPercentage = hargaJual > 0 ? ((margin / hargaJual) * 100).toFixed(2) : '0.00';
 
@@ -158,7 +246,12 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
                 header: 'HPP & Margin',
                 cell: ({ getValue }: any) => {
                     const data: {
-                        bahanBakuList: { name: string; jumlah: number; satuan: string; price: number }[];
+                        bahanBakuList: {
+                            name: string;
+                            jumlah: number;
+                            satuan: string;
+                            price: number;
+                        }[];
                         totalHpp: number;
                         hargaJual: number;
                         margin: number;
@@ -233,7 +326,9 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
                             variant="destructive"
                             onClick={() => {
                                 if (confirm('Yakin ingin menghapus resep ini?')) {
-                                    router.delete(`/master-data/recipes/${recipe.id}`, { preserveScroll: true });
+                                    router.delete(`/master-data/recipes/${recipe.id}`, {
+                                        preserveScroll: true,
+                                    });
                                 }
                             }}
                         >
@@ -248,7 +343,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
         });
 
         return cols;
-    }, [auth.user]);
+    }, [isAdmin, handleEdit]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -264,7 +359,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
                             control={control}
                             name="menu_id"
                             render={({ field }) => {
-                                const currentMenuId = Number(field.value);
+                                const currentMenuId = Number(field.value || 0);
                                 return (
                                     <FormItem>
                                         <FormLabel>Menu</FormLabel>
@@ -272,11 +367,9 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
                                             <Select
                                                 options={menuOptions}
                                                 value={menuOptions.find((opt) => opt.value === currentMenuId) ?? null}
-                                                onChange={(opt) => field.onChange(opt ? (opt as { value: number }).value : undefined)}
+                                                onChange={(opt) => field.onChange(opt ? (opt as { value: number }).value : 0)}
                                                 isDisabled={editMode}
-                                                placeholder={
-                                                    editMode ? (menus.find((m) => m.id === currentMenuId)?.name ?? 'Pilih menu…') : 'Pilih menu…'
-                                                }
+                                                placeholder="Pilih menu…"
                                                 menuPosition="fixed"
                                             />
                                         </FormControl>
@@ -285,6 +378,48 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
                                 );
                             }}
                         />
+
+                        {/* Variant (opsional, jika menu punya variant) */}
+                        {selectedMenu && selectedMenu.variants && selectedMenu.variants.length > 0 && (
+                            <FormField
+                                control={control}
+                                name="variant_id"
+                                render={({ field }) => {
+                                    return (
+                                        <FormItem>
+                                            <FormLabel>Variant (opsional)</FormLabel>
+                                            <FormControl>
+                                                <Select
+                                                    options={variantOptions.map((v) => ({
+                                                        label: `${v.name} (${formatRupiah(v.price)})`,
+                                                        value: v.id,
+                                                    }))}
+                                                    value={
+                                                        field.value
+                                                            ? {
+                                                                  label:
+                                                                      variantOptions.find((v) => v.id === Number(field.value))?.name +
+                                                                      ' (' +
+                                                                      formatRupiah(
+                                                                          variantOptions.find((v) => v.id === Number(field.value))?.price || 0,
+                                                                      ) +
+                                                                      ')',
+                                                                  value: Number(field.value),
+                                                              }
+                                                            : null
+                                                    }
+                                                    onChange={(opt) => field.onChange(opt ? (opt as { value: number }).value : undefined)}
+                                                    isClearable
+                                                    placeholder="Pilih variant…"
+                                                    menuPosition="fixed"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    );
+                                }}
+                            />
+                        )}
 
                         {/* Tabel rows */}
                         <div className="w-full overflow-x-auto rounded-lg border">
@@ -300,8 +435,8 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
                                 </thead>
 
                                 <tbody className="text-center">
-                                    {fields.map((field, index) => (
-                                        <tr key={field.id} className="border-t">
+                                    {fields.map((fieldItem, index) => (
+                                        <tr key={fieldItem.id} className="border-t">
                                             <td className="px-3 py-2">{index + 1}</td>
 
                                             {/* Ingredient */}
@@ -314,16 +449,8 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
                                                             <FormControl>
                                                                 <Select
                                                                     options={ingredientOptions}
-                                                                    value={
-                                                                        ingredientOptions.find(
-                                                                            (opt: { value: number }) => opt.value === field.value,
-                                                                        ) ?? null
-                                                                    }
-                                                                    onChange={(opt) =>
-                                                                        field.onChange(
-                                                                            opt ? (opt as { value: number }).value : (undefined as unknown as number),
-                                                                        )
-                                                                    }
+                                                                    value={ingredientOptions.find((opt) => opt.value === field.value) ?? null}
+                                                                    onChange={(opt) => field.onChange(opt ? (opt as { value: number }).value : 0)}
                                                                     placeholder="Pilih bahan…"
                                                                     menuPosition="fixed"
                                                                 />
@@ -368,7 +495,14 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
                                                             <FormControl>
                                                                 <Select
                                                                     options={unitOptions}
-                                                                    value={field.value ? { label: field.value, value: field.value } : null}
+                                                                    value={
+                                                                        field.value
+                                                                            ? {
+                                                                                  label: field.value,
+                                                                                  value: field.value,
+                                                                              }
+                                                                            : null
+                                                                    }
                                                                     onChange={(opt) => field.onChange(opt ? (opt as { value: string }).value : '')}
                                                                     placeholder="Pilih unit…"
                                                                     menuPosition="fixed"
@@ -400,7 +534,16 @@ export default function RecipesPage({ recipes, bahanBaku, menus }: RecipesProps)
 
                         {/* Row actions */}
                         <div className="flex items-center gap-2">
-                            <Button type="button" onClick={() => append({ ingredien_id: undefined as unknown as number, quantity: 1, unit: '' })}>
+                            <Button
+                                type="button"
+                                onClick={() =>
+                                    append({
+                                        ingredien_id: 0,
+                                        quantity: 1,
+                                        unit: '',
+                                    })
+                                }
+                            >
                                 Tambah Baris
                             </Button>
                             <Button

@@ -2,7 +2,7 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Link } from '@inertiajs/react';
-import { CircleDollarSign, LayoutGrid, User, Utensils } from 'lucide-react';
+import { CircleDollarSign, Database, LayoutGrid, User, Utensils } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems = [
@@ -71,6 +71,12 @@ const mainNavItems = [
                 isAdmin: true,
             },
         ],
+    },
+    {
+        title: 'Stock Opname',
+        url: '/stock-opname',
+        icon: Database,
+        isAdmin: true,
     },
 ];
 

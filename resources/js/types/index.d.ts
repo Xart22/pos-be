@@ -45,6 +45,25 @@ export interface User {
     [key: string]: unknown; // This allows for additional properties...
 }
 
+export interface Variants {
+    id: number;
+    position: number;
+    variant: Variant[];
+}
+
+export interface Variant {
+    id: number;
+    name: string;
+    options: OptionsVariant[];
+}
+
+export interface OptionsVariant {
+    id: number;
+    name: string;
+    price: number;
+    position: number;
+}
+
 export interface Menu {
     id: number;
     categoryId: string;
@@ -55,19 +74,8 @@ export interface Menu {
     stock: number;
     is_active: boolean;
     is_online: boolean;
-    variants: {
-        id: number;
-        position: number;
-        variant: {
-            id: number;
-            name: string;
-            options: {
-                id: number;
-                name: string;
-                price: number;
-            };
-        }[];
-    };
+    variants?: Variants[];
+    recipes?: Recipe[];
     [key: string]: unknown; // This allows for additional properties...
 }
 
@@ -125,6 +133,7 @@ export interface Recipe {
     instructions: string;
     bahan_bakus: Bahan[];
     menu: Menu;
+    variant_option?: OptionsVariant | null;
 }
 
 export interface Category {
@@ -148,4 +157,25 @@ export interface Operational {
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface TransactionDetails {
+    id: number;
+    transaction_id: number;
+    menu_id: number;
+    quantity: number;
+    [key: string]: unknown; // This allows for additional properties...
+    menu: Menu;
+}
+
+export interface SumIngredients {
+    bahan_baku_id: number;
+    name: string;
+    unit: string;
+    quantity: number;
+}
+
+export interface TransactionItem {
+    name: string;
+    quantity: number;
 }

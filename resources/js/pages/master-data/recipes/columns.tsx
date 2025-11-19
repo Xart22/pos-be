@@ -5,7 +5,7 @@ import { Recipe } from '@/types';
 
 export const columns: ColumnDef<Recipe>[] = [
     {
-        accessorFn: (row) => row.menu?.name,
+        accessorFn: (row) => row.menu?.name + (row.variant_option ? ` - ${row.variant_option.name}` : ''),
         accessorKey: 'menu_name',
         id: 'menu_name',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Menu" />,

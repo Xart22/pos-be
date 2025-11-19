@@ -15,9 +15,10 @@ class RecipeController extends Controller
 {
     public function index()
     {
-        $recipes = Recipe::with(['bahanBakus', 'menu'])->get();
+        $recipes = Recipe::with(['bahanBakus', 'menu', 'variantOption'])->get();
         $bahanBakus = BahanBaku::all();
         $variantOptions = VariantOption::where("price", ">", 0)->get();
+
 
         $menus = Menu::all();
 
@@ -45,11 +46,13 @@ class RecipeController extends Controller
                 'rows.*.quantity' => 'required|numeric|min:0',
                 'rows.*.unit' => 'required|string',
                 'instruction' => 'nullable|string',
+                'variant_id' => 'nullable|exists:variant_options,id',
             ]);
             DB::beginTransaction();
             $recipe = Recipe::create([
                 'menu_id' => $data['menu_id'],
                 'instructions' => $data['instruction'] ?? '',
+                'variant_options_id' => $data['variant_id'] ?? null,
             ]);
 
             foreach ($data['rows'] as $row) {
@@ -87,6 +90,7 @@ class RecipeController extends Controller
             'rows.*.quantity' => 'required|numeric|min:0',
             'rows.*.unit' => 'required|string',
             'instruction' => 'nullable|string',
+            'variant_options_id' => 'nullable|exists:variant_options,id',
         ]);
 
         try {
@@ -94,6 +98,7 @@ class RecipeController extends Controller
             $recipe = Recipe::findOrFail($id);
             $recipe->update([
                 'instructions' => $data['instruction'] ?? '',
+                'variant_options_id' => $data['variant_options_id'] ?? null,
             ]);
             // Hapus bahan lama
             Bahan::where('recipe_id', $recipe->id)->delete();
