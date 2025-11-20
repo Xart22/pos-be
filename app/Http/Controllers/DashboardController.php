@@ -28,11 +28,9 @@ class DashboardController extends Controller
 
 
         // Periode bulan berjalan: 1 s/d akhir bulan
-        // $startOfPeriod = $now->copy()->startOfMonth();
-        // $endOfPeriod   = $now->copy()->endOfMonth();
+        $startOfPeriod = $now->copy()->startOfMonth();
+        $endOfPeriod   = $now->copy()->endOfMonth();
 
-        $startOfPeriod = "2025-11-16";
-        $endOfPeriod   = "2025-11-16";
 
         $startOfPeriod = \Carbon\Carbon::parse($startOfPeriod)->startOfDay();
         $endOfPeriod = \Carbon\Carbon::parse($endOfPeriod)->endOfDay();
@@ -89,11 +87,11 @@ class DashboardController extends Controller
                 ->get();
 
 
-            // $transactions = Transaction::whereDate('created_at', $now->format('Y-m-d'))->get();
-            $transactions = Transaction::whereBetween('created_at', [
-                $startOfPeriod->copy()->subMonth(),
-                $endOfPeriod->copy()->subMonth(),
-            ])->get();
+            $transactions = Transaction::whereDate('created_at', $now->format('Y-m-d'))->get();
+            // $transactions = Transaction::whereBetween('created_at', [
+            //     $startOfPeriod->copy()->subMonth(),
+            //     $endOfPeriod->copy()->subMonth(),
+            // ])->get();
 
             $transactions->load([
                 'details.menu',

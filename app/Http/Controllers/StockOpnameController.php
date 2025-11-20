@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BahanBaku;
+use App\Models\Recipe;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -101,14 +102,13 @@ class StockOpnameController extends Controller
                 $lowerDrinkKey = strtolower($drinkKey);
                 if (str_contains($lowerDrinkKey, 'large')) {
                     $drinkKey = $baseKey . ' - L';
+                    $recipe = Recipe::where('menu_id', $menu->id)->whereNotNull('variant_option_id')->first();
                 } elseif (str_contains($lowerDrinkKey, 'reguler')) {
                     $drinkKey = $baseKey . ' - R';
+                    $recipe = $menu->recipes->first();
                 }
 
-                // ==========================
-                // HITUNG RESEP & BAHAN BAKU
-                // ==========================
-                $recipe = $menu->recipes->first();
+
 
                 $usedIngredients = collect();
                 if ($recipe && $recipe->bahanBakus) {
@@ -186,6 +186,7 @@ class StockOpnameController extends Controller
                             ->map(function ($items) {
                                 $first = $items->first();
 
+
                                 return [
                                     'bahan_baku_id' => $first['bahan_baku_id'],
                                     'name'          => $first['name'],
@@ -201,6 +202,7 @@ class StockOpnameController extends Controller
                 }
             }
         }
+
 
         // ==========================
         // SUM BAHAN BAKU KESELURUHAN (FOOD + DRINK)
@@ -223,6 +225,8 @@ class StockOpnameController extends Controller
                 $sumIngredients[$id]['quantity'] += $ingredient['quantity'];
             }
         }
+        dd($transDrink);
+
         // ==========================
         // RETURN KE INERTIA
         // ==========================

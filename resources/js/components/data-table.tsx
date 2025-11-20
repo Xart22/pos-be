@@ -66,7 +66,7 @@ export function DataTable<TData, TValue>({ columns, data, filterColumn, enableSe
             {enableSearching && <DataTableToolbar table={table} filterColumns={filterColumn ?? []} placeholder="Search..." showResetButton={true} />}
             <div className="rounded-md border">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-muted/50">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {
