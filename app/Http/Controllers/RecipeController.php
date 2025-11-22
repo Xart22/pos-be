@@ -90,7 +90,7 @@ class RecipeController extends Controller
             'rows.*.quantity' => 'required|numeric|min:0',
             'rows.*.unit' => 'required|string',
             'instruction' => 'nullable|string',
-            'variant_options_id' => 'nullable|exists:variant_options,id',
+            'variant_id' => 'nullable|exists:variant_options,id',
         ]);
 
         try {
@@ -98,7 +98,7 @@ class RecipeController extends Controller
             $recipe = Recipe::findOrFail($id);
             $recipe->update([
                 'instructions' => $data['instruction'] ?? '',
-                'variant_options_id' => $data['variant_options_id'] ?? null,
+                'variant_options_id' => $data['variant_id'] ?? null,
             ]);
             // Hapus bahan lama
             Bahan::where('recipe_id', $recipe->id)->delete();
