@@ -1,3 +1,4 @@
+import { DataTable } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import formatRupiah from '@/helper/formatRupiah';
 import AppLayout from '@/layouts/app-layout';
@@ -223,35 +224,17 @@ export default function StockOpnamePage() {
                     <div className="rounded-xl border bg-white p-4 shadow-sm dark:bg-gray-900">
                         <h2 className="mb-3 text-lg font-semibold">Penjualan Drink</h2>
                         <div className="max-h-[350px] w-full overflow-auto rounded-lg border">
-                            <table className="w-full table-auto border-collapse text-sm">
-                                <thead className="bg-muted/50">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left font-semibold">Menu</th>
-                                        <th className="px-3 py-2 text-right font-semibold">Qty</th>
-                                        <th className="px-3 py-2 text-right font-semibold">Base Price</th>
-                                        <th className="px-3 py-2 text-right font-semibold">Variant Price</th>
-                                        <th className="px-3 py-2 text-right font-semibold">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {transactions_drink.length === 0 && (
-                                        <tr>
-                                            <td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">
-                                                Tidak ada transaksi drink pada periode ini.
-                                            </td>
-                                        </tr>
-                                    )}
-                                    {transactions_drink.map((row, idx) => (
-                                        <tr key={`${row.name}-${idx}`} className="border-t">
-                                            <td className="px-3 py-2">{row.menu}</td>
-                                            <td className="px-3 py-2 text-right">{row.quantity}</td>
-                                            <td className="px-3 py-2 text-right">{formatRupiah(row.base_price)}</td>
-                                            <td className="px-3 py-2 text-right">{formatRupiah(row.variant_price)}</td>
-                                            <td className="px-3 py-2 text-right">{formatRupiah(row.total_price)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            <DataTable
+                                columns={[
+                                    { accessorKey: 'menu', header: 'Menu' },
+                                    { accessorKey: 'quantity', header: 'Qty', cell: (info) => info.getValue<number>().toString() },
+                                    { accessorKey: 'base_price', header: 'Base Price', cell: (info) => formatRupiah(info.getValue<number>()) },
+                                    { accessorKey: 'variant_price', header: 'Variant Price', cell: (info) => formatRupiah(info.getValue<number>()) },
+                                    { accessorKey: 'total_price', header: 'Total', cell: (info) => formatRupiah(info.getValue<number>()) },
+                                ]}
+                                data={transactions_drink}
+                                enableSearching={true}
+                            />
                         </div>
                     </div>
                 </div>
