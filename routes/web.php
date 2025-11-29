@@ -19,6 +19,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
+    Route::post('cashbon/request', [DashboardController::class, 'handleSubmitCashbon'])
+        ->name('cashbon.request');
+
 
     Route::get('master-data/menu', [MenuController::class, 'index'])
         ->name('menu.index');
@@ -55,6 +58,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/cash-flow/cash-out', [CashOutController::class, 'index'])
         ->name('cash-out.index');
+
+    Route::post('/cash-flow/cash-out', [CashOutController::class, 'store'])
+        ->name('cash-out.store');
 
     Route::get('/cash-flow/operational', [OperationalController::class, 'index'])
         ->name('operational.index');

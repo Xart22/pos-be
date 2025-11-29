@@ -2,6 +2,7 @@ import { DataTable } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
@@ -44,6 +45,29 @@ export default function Dashboard({ absensis, totalEarnings, paid, type }: Dashb
         setSelectedShift(value);
     };
     const [error, setError] = useState('');
+
+    const [amount, setAmount] = useState<string>('');
+
+    const [dialogRequestCashbonOpen, setDialogRequestCashbonOpen] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
+
+    const handleSumitRequestCashbon = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        const formData = new FormData();
+        formData.append('amount', amount);
+
+        router.post('/cashbon/request', formData, {
+            onSuccess: () => {
+                //close the dialog
+                setAmount('');
+                setDialogRequestCashbonOpen(false);
+            },
+            onError: (error) => {
+                console.error('Error submitting cashout request:', error);
+            },
+        });
+    };
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -107,7 +131,7 @@ export default function Dashboard({ absensis, totalEarnings, paid, type }: Dashb
                     <div className="rounded-xl border border-border dark:border-gray-700">
                         <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
                             {type === 'Absen Masuk' ? (
-                                <Dialog>
+                                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                                     <DialogTrigger asChild>
                                         <Button size="lg" className="w-full max-w-xs">
                                             {type}
@@ -172,19 +196,52 @@ export default function Dashboard({ absensis, totalEarnings, paid, type }: Dashb
 
                     {/* Card 3: Earnings Summary */}
                     <div className="rounded-xl border border-border dark:border-gray-700">
-                        <Card className="flex h-full flex-col justify-center gap-4 p-6 text-center">
-                            <div>
-                                <h2 className="text-sm font-semibold text-muted-foreground">Total Unpaid</h2>
-                                <p className="text-base font-bold text-red-600">{convertToRupiah((totalEarnings - paid).toString(), 'Rp ')}</p>
+                        <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
+                            <div className="flex h-full flex-row items-center justify-between gap-6">
+                                <div>
+                                    <h2 className="text-sm font-semibold text-muted-foreground">Total Unpaid</h2>
+                                    <p className="text-base font-bold text-red-600">{convertToRupiah((totalEarnings - paid).toString(), 'Rp ')}</p>
+                                </div>
+                                <div>
+                                    <h2 className="text-sm font-semibold text-muted-foreground">Total Paid Off</h2>
+                                    <p className="text-base font-bold text-green-600">{convertToRupiah(paid.toString(), 'Rp ')}</p>
+                                </div>
+                                <div>
+                                    <h2 className="text-sm font-semibold text-muted-foreground">Total Earnings</h2>
+                                    <p className="text-base font-bold text-blue-600">{convertToRupiah(totalEarnings.toString(), 'Rp ')}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 className="text-sm font-semibold text-muted-foreground">Total Paid Off</h2>
-                                <p className="text-base font-bold text-green-600">{convertToRupiah(paid.toString(), 'Rp ')}</p>
-                            </div>
-                            <div>
-                                <h2 className="text-sm font-semibold text-muted-foreground">Total Earnings</h2>
-                                <p className="text-base font-bold text-blue-600">{convertToRupiah(totalEarnings.toString(), 'Rp ')}</p>
-                            </div>
+                            <Dialog open={dialogRequestCashbonOpen} onOpenChange={setDialogRequestCashbonOpen}>
+                                <DialogTrigger asChild>
+                                    <Button size="lg" className="w-full max-w-xs">
+                                        Request Cashout
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="mt-3 sm:max-w-[425px]">
+                                    <DialogHeader>
+                                        <DialogTitle>Request Cashout</DialogTitle>
+                                    </DialogHeader>
+                                    <form onSubmit={handleSumitRequestCashbon} className="space-y-4">
+                                        <Label htmlFor="amount">Amount</Label>
+                                        <Input
+                                            type="number"
+                                            name="amount"
+                                            id="amount"
+                                            placeholder="Enter amount"
+                                            className="mt-1 w-full"
+                                            required
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value)}
+                                        />
+
+                                        <DialogFooter>
+                                            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
+                                                Submit
+                                            </Button>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
                         </Card>
                     </div>
                 </div>

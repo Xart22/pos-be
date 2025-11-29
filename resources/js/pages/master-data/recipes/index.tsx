@@ -586,7 +586,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                 {/* DataTable */}
                 <div className="relative w-full overflow-hidden rounded-xl border">
                     <div className="px-4 py-8 md:px-8">
-                        <DataTable columns={columns} data={recipes} filterColumn={['menu_name']} enableSearching />
+                        <DataTable columns={columns} data={recipes} filterColumn={['menu_name', 'bahan_bakus']} enableSearching />
                     </div>
                 </div>
             </div>

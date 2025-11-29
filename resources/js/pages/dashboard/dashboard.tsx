@@ -28,6 +28,8 @@ type DashboardProps = {
     txUnknown: TxMenu[];
     dataOmset: OmsetChartData[];
     dataOmsetLastMonth: OmsetChartData[];
+    cashOutToday: string;
+    totalCashOut: string;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -53,6 +55,8 @@ export default function Dashboard({
     txUnknown,
     dataOmset,
     dataOmsetLastMonth,
+    cashOutToday,
+    totalCashOut,
 }: DashboardProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -65,7 +69,7 @@ export default function Dashboard({
                 <div className="grid auto-rows-[1fr] grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="rounded-xl border border-border dark:border-gray-700">
                         <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
-                            <h2 className="text-base font-semibold text-muted-foreground">Pendapatan Hari ini</h2>
+                            <h2 className="text-base font-semibold text-muted-foreground">Omset Hari ini</h2>
                             <p className="text-1xl font-bold text-primary md:text-2xl">
                                 {formatRupiah(parseFloat(omsetToday))} / {jumlahTransaksiToday}
                             </p>
@@ -74,12 +78,12 @@ export default function Dashboard({
                     <div className="rounded-xl border border-border dark:border-gray-700">
                         <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
                             <h2 className="text-base font-semibold text-muted-foreground">Pengeluaran Hari ini</h2>
-                            <p className="text-1xl font-bold text-primary md:text-2xl"> Transaksi</p>
+                            <p className="text-1xl font-bold text-primary md:text-2xl"> {formatRupiah(parseFloat(cashOutToday))} </p>
                         </Card>
                     </div>
                     <div className="rounded-xl border border-border dark:border-gray-700">
                         <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
-                            <h2 className="text-base font-semibold text-muted-foreground">Total Pendapatan Bulan ini </h2>
+                            <h2 className="text-base font-semibold text-muted-foreground">Total Omset Bulan ini </h2>
                             <p className="text-1xl font-bold text-primary md:text-2xl">
                                 {formatRupiah(parseFloat(omsetThisMonth))} / {jumlahTransaksiThisMonth}
                             </p>
@@ -88,7 +92,7 @@ export default function Dashboard({
                     <div className="rounded-xl border border-border dark:border-gray-700">
                         <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
                             <h2 className="text-base font-semibold text-muted-foreground">Total Pengeluaran Bulan ini</h2>
-                            <p className="text-1xl font-bold text-primary md:text-2xl"> Transaksi</p>
+                            <p className="text-1xl font-bold text-primary md:text-2xl"> {formatRupiah(parseFloat(totalCashOut))} </p>
                         </Card>
                     </div>
                 </div>

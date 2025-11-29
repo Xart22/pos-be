@@ -28,6 +28,7 @@ export const columns: ColumnDef<Recipe>[] = [
                 satuan: bahan.satuan,
             })),
         id: 'bahan_bakus',
+        accessorKey: 'bahan_bakus',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Bahan Baku" />,
         cell: ({ row }) => {
             const bahanBakus = row.getValue('bahan_bakus') as { name: string; jumlah: number; satuan: string }[];

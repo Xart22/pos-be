@@ -41,6 +41,9 @@ class BahanBakuController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (auth()->user()->role !== 'admin') {
+            return redirect()->route('bahan-baku.index')->with('error', 'Anda tidak memiliki izin untuk memperbarui bahan baku.');
+        }
         $bahanBaku = BahanBaku::where('kode', $id)->firstOrFail();
         $bahanBaku->update($request->all());
         return redirect()->route('bahan-baku.index')->with('success', 'Bahan baku berhasil diperbarui.');

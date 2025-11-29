@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\BahanBaku;
+use App\Models\CashOut;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CashOutController extends Controller
@@ -32,7 +34,33 @@ class CashOutController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try {
+            DB::beginTransaction();
+            $desc = $request->description ?? '';
+            foreach ($request->rows as $item) {
+                if ($item['bahan_baku_id'] != 78) {
+                    $bahanBaku = BahanBaku::where('id', $item['bahan_baku_id'])->first();
+                    if ($bahanBaku) {
+                        $bahanBaku->stock += $item['quantity'];
+                        $bahanBaku->harga = $item['harga'];
+                        $bahanBaku->save();
+                        $desc .= "<br>Pembelian - {$bahanBaku->name}: +{$item['quantity']} total = {$bahanBaku->stock} @ Rp. " . number_format($item['harga'], 0, ',', '.');
+                    }
+                }
+            }
+
+            CashOut::create([
+                'amount' => $request->total,
+                'description' => trim($desc),
+                'tanggal' => $request->tanggal,
+            ]);
+
+            DB::commit();
+            return redirect()->route('cash-out.index')->with('success', 'Cash out processed successfully.');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return back()->with('error', 'An error occurred: ' . $th->getMessage());
+        }
     }
 
     /**

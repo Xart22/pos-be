@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('cash_outs', function (Blueprint $table) {
             $table->id();
+            $table->date('tanggal');
             $table->foreignId('bahan_baku_id')->constrained('bahan_bakus')->onDelete('cascade')->nullable();
-            $table->longText('description')->nullable();
+            $table->longText('description');
+
             $table->integer('amount');
             $table->timestamps();
         });

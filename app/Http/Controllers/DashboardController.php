@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Absensi;
+use App\Models\Cashbon;
+use App\Models\CashOut;
 use App\Models\Category;
 use App\Models\Menu;
 use App\Models\Transaction;
@@ -191,8 +193,13 @@ class DashboardController extends Controller
             // $transUnknown sudah numerik
 
 
-            $itemSoldThisMonth = Transaction::whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
-                ->count();
+            $totalCashOut = CashOut::whereBetween('created_at', ["{$todayStart}", "{$todayEnd}"])
+                ->sum('amount');
+            $cashOutToday = CashOut::whereDate('tanggal', $now->format('Y-m-d'))
+                ->sum('amount');
+
+
+
 
 
             return Inertia::render('dashboard/dashboard', [
@@ -214,6 +221,8 @@ class DashboardController extends Controller
                 'txDrink' => $transDrink,
                 'txFood' => $transFood,
                 'txUnknown' => $transUnknown,
+                'cashOutToday' => $cashOutToday,
+                'totalCashOut' => $totalCashOut,
             ]);
         }
 
@@ -242,10 +251,7 @@ class DashboardController extends Controller
                 $cleanValue = str_replace(['Rp', '.', ','], '', $absensi->take_home_pay);
                 return (int)$cleanValue;
             }),
-            'paid' => $absensis->where('keterangan', 'Paid')->sum(function ($absensi) {
-                $cleanValue = str_replace(['Rp', '.', ','], '', $absensi->take_home_pay);
-                return (int)$cleanValue;
-            }),
+            'paid' => Cashbon::where('user_id', Auth::id())->where('status', 'Disetujui')->sum('jumlah'),
 
             'type' => $type,
         ]);
@@ -288,6 +294,26 @@ class DashboardController extends Controller
     public function show()
     {
         return Inertia::render('dashboard/show');
+    }
+
+
+    public function handleSubmitCashbon(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'amount' => 'required|numeric|min:1',
+        ]);
+
+        $amount = $request->input('amount');
+
+        Cashbon::create([
+            'user_id' => Auth::id(),
+            'jumlah' => $amount,
+            'status' => 'Diajukan',
+            'tanggal' => now()->format('Y-m-d'),
+        ]);
+
+        return redirect()->back()->with('success', 'Cashout request of amount ' . $amount . ' has been submitted successfully.');
     }
 
 
