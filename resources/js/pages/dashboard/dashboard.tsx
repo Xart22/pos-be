@@ -132,7 +132,7 @@ export default function Dashboard({
                         <div className="flex justify-center gap-2">
                             <Card className="px-2 text-sm">
                                 Total Cup Regular:
-                                {txDrink.filter((item) => item.menu.includes('R')).reduce((acc, item) => acc + item.quantity, 0)}
+                                {txDrink.filter((item) => item.menu.includes('- R')).reduce((acc, item) => acc + item.quantity, 0)}
                             </Card>
                             <Card className="px-2 text-sm">
                                 Total Cup Large: {txDrink.filter((item) => item.menu.includes('- L')).reduce((acc, item) => acc + item.quantity, 0)}
