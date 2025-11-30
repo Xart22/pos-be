@@ -30,6 +30,7 @@ type IngredientSummary = {
     name: string;
     unit: string;
     quantity: number;
+    cost?: number;
 };
 
 type PageProps = {
@@ -158,7 +159,7 @@ export default function StockOpnamePage() {
                                     <th className="px-3 py-2 text-left font-semibold">#</th>
                                     <th className="px-3 py-2 text-left font-semibold">Bahan Baku</th>
                                     <th className="px-3 py-2 text-right font-semibold">Quantity</th>
-                                    <th className="px-3 py-2 text-left font-semibold">Unit</th>
+                                    <th className="px-3 py-2 text-right font-semibold">Cost</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -174,14 +175,21 @@ export default function StockOpnamePage() {
                                         <td className="px-3 py-2">{idx + 1}</td>
                                         <td className="px-3 py-2">{ing.name}</td>
                                         <td className="px-3 py-2 text-right">{formatQty(Number(ing.quantity), ing.unit)}</td>
-                                        <td className="px-3 py-2">{ing.unit}</td>
+                                        <td className="px-3 py-2 text-right">{ing.cost ? formatRupiah(ing.cost) : '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
+                    <p className="mt-2 text-sm text-muted-foreground">*Cost dihitung berdasarkan harga bahan baku per unit.</p>
+                    {/* Total Cost */}
+                    <div className="mt-4 flex justify-end">
+                        <span className="font-semibold">Total Cost: </span>
+                        <span className="ml-2 font-bold">
+                            {formatRupiah(sum_ingredients.reduce((sum, ing) => sum + (ing.cost ? Number(ing.cost) : 0), 0))}
+                        </span>
+                    </div>
                 </div>
-
                 {/* =================== TABEL FOOD & DRINK =================== */}
                 <div className="grid gap-4 lg:grid-cols-2">
                     {/* FOOD */}

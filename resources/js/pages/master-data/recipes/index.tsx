@@ -21,6 +21,18 @@ type RecipesProps = {
     menus: Menu[];
     variantOptions: { id: number; name: string; price: number }[];
 };
+type HppCellData = {
+    bahanBakuList: {
+        name: string;
+        jumlah: number;
+        satuan: string;
+        price: number;
+    }[];
+    totalHpp: number;
+    hargaJual: number;
+    margin: number;
+    marginPercentage: string;
+};
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Recipes', href: '/master-data/recipes' }];
 
@@ -208,8 +220,8 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
     const columns = useMemo(() => {
         const cols = [...baseColumns];
 
-        // Tambahkan kolom HPP jika admin
         if (isAdmin) {
+            // 1) Kolom visual HPP & Margin (tetap seperti sekarang)
             cols.push({
                 accessorFn: (row: any) => {
                     const bahanBakuList =
@@ -245,7 +257,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                 id: 'hpp',
                 header: 'HPP & Margin',
                 cell: ({ getValue }: any) => {
-                    const data: {
+                    const data = getValue() as {
                         bahanBakuList: {
                             name: string;
                             jumlah: number;
@@ -256,7 +268,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                         hargaJual: number;
                         margin: number;
                         marginPercentage: string;
-                    } = getValue();
+                    };
 
                     const isPositiveMargin = data.margin >= 0;
 
@@ -310,6 +322,71 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                 },
                 enableSorting: false,
             });
+
+            // 2) Kolom numerik khusus untuk Excel
+            cols.push(
+                {
+                    id: 'total_hpp',
+                    header: 'Total HPP (Rp)',
+                    accessorFn: (row: any) => {
+                        const bahanBakuList =
+                            row.bahan_bakus?.map((bahan: any) => {
+                                const harga = Number(bahan.bahan_baku?.harga ?? 0);
+                                const perUnit = Number(bahan.bahan_baku?.per_unit ?? 1) || 1;
+                                const jumlah = Number(bahan.jumlah ?? bahan.quantity ?? 0);
+                                return Math.round((harga / perUnit) * jumlah);
+                            }) || [];
+
+                        const totalHpp = bahanBakuList.reduce((sum: number, price: number) => sum + (price || 0), 0);
+
+                        return totalHpp; // <- number, aman untuk Excel
+                    },
+                    cell: ({ getValue }: any) => formatRupiah(Number(getValue() || 0)),
+                },
+                {
+                    id: 'margin_rp',
+                    header: 'Margin (Rp)',
+                    accessorFn: (row: any) => {
+                        const bahanBakuList =
+                            row.bahan_bakus?.map((bahan: any) => {
+                                const harga = Number(bahan.bahan_baku?.harga ?? 0);
+                                const perUnit = Number(bahan.bahan_baku?.per_unit ?? 1) || 1;
+                                const jumlah = Number(bahan.jumlah ?? bahan.quantity ?? 0);
+                                return Math.round((harga / perUnit) * jumlah);
+                            }) || [];
+
+                        const totalHpp = bahanBakuList.reduce((sum: number, price: number) => sum + (price || 0), 0);
+                        const hargaVariant = Number(row.variant_option?.price || 0);
+                        const hargaJual = Number(row.menu?.price || 0) + hargaVariant;
+                        const margin = hargaJual - totalHpp;
+
+                        return margin; // <- number
+                    },
+                    cell: ({ getValue }: any) => formatRupiah(Number(getValue() || 0)),
+                },
+                {
+                    id: 'margin_percent',
+                    header: 'Margin (%)',
+                    accessorFn: (row: any) => {
+                        const bahanBakuList =
+                            row.bahan_bakus?.map((bahan: any) => {
+                                const harga = Number(bahan.bahan_baku?.harga ?? 0);
+                                const perUnit = Number(bahan.bahan_baku?.per_unit ?? 1) || 1;
+                                const jumlah = Number(bahan.jumlah ?? bahan.quantity ?? 0);
+                                return Math.round((harga / perUnit) * jumlah);
+                            }) || [];
+
+                        const totalHpp = bahanBakuList.reduce((sum: number, price: number) => sum + (price || 0), 0);
+                        const hargaVariant = Number(row.variant_option?.price || 0);
+                        const hargaJual = Number(row.menu?.price || 0) + hargaVariant;
+                        const margin = hargaJual - totalHpp;
+
+                        if (!hargaJual) return 0;
+                        return Number(((margin / hargaJual) * 100).toFixed(2)); // <- number
+                    },
+                    cell: ({ getValue }: any) => `${getValue() || 0}%`,
+                },
+            );
         }
 
         // Kolom Actions

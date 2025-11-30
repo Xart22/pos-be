@@ -64,6 +64,7 @@
         "tailwindcss-animate": "^1.0.7",
         "typescript": "^5.7.2",
         "vite": "^6.0",
+        "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
         "zod": "^4.1.12"
     },
     "optionalDependencies": {

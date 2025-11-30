@@ -104,7 +104,8 @@ class StockOpnameController extends Controller
                             // ==========================
                             // PILIH RECIPE TANPA QUERY DB
                             // ==========================
-                            $recipe = null;
+                            $recipe = $menu->recipes->first(); // default recipe
+
                             $lowerDrinkKey = strtolower($drinkKey);
 
                             if (str_contains($lowerDrinkKey, 'large')) {
@@ -131,6 +132,7 @@ class StockOpnameController extends Controller
                                         'name'          => $bahanResep->bahanBaku->name ?? null,
                                         'unit'          => $bahanResep->satuan,
                                         'quantity'      => (float) $bahanResep->jumlah * $quantity,
+                                        'cost'          => (float) $bahanResep->bahanBaku->harga / $bahanResep->bahanBaku->per_unit * ((float) $bahanResep->jumlah * $quantity),
                                     ];
                                 });
                             }
@@ -153,6 +155,7 @@ class StockOpnameController extends Controller
                             // ==========================
                             // MASUKKAN KE BUCKET
                             // ==========================
+
                             if (isset($foodSet[$categoryId])) {
                                 // FOOD: gabung per nama menu
                                 $key = $baseKey;
@@ -174,6 +177,7 @@ class StockOpnameController extends Controller
                                                 'name'          => $first['name'],
                                                 'unit'          => $first['unit'],
                                                 'quantity'      => $items->sum('quantity'),
+                                                'cost'          => $items->sum('cost'),
                                             ];
                                         })
                                         ->values();
@@ -200,6 +204,7 @@ class StockOpnameController extends Controller
                                                 'name'          => $first['name'],
                                                 'unit'          => $first['unit'],
                                                 'quantity'      => $items->sum('quantity'),
+                                                'cost'          => $items->sum('cost'),
                                             ];
                                         })
                                         ->values();
@@ -217,9 +222,12 @@ class StockOpnameController extends Controller
             // ==========================
             $allItems = array_merge(array_values($transFood), array_values($transDrink));
 
+
             foreach ($allItems as $item) {
                 foreach ($item['used_ingredients'] as $ingredient) {
+
                     $id = $ingredient['bahan_baku_id'];
+
 
                     if (!isset($sumIngredients[$id])) {
                         $sumIngredients[$id] = [
@@ -227,10 +235,11 @@ class StockOpnameController extends Controller
                             'name'          => $ingredient['name'],
                             'unit'          => $ingredient['unit'],
                             'quantity'      => 0,
+                            'cost'          => 0,
                         ];
                     }
-
                     $sumIngredients[$id]['quantity'] += $ingredient['quantity'];
+                    $sumIngredients[$id]['cost'] += $ingredient['cost'];
                 }
             }
 

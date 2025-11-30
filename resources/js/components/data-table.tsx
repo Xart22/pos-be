@@ -1,6 +1,7 @@
 'use client';
 
 import {
+    CellContext,
     ColumnDef,
     ColumnFiltersState,
     SortingState,
@@ -15,6 +16,14 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 import * as React from 'react';
+import * as XLSX from 'xlsx';
+
+declare module '@tanstack/react-table' {
+    interface ColumnMeta<TData, TValue> {
+        skipExport?: boolean;
+        exportValue?: (context: CellContext<TData, TValue>) => any;
+    }
+}
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -60,10 +69,52 @@ export function DataTable<TData, TValue>({ columns, data, filterColumn, enableSe
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
     });
+    const handleExportXLSX = () => {
+        // Kalau mau semua hasil filter (tidak peduli pagination):
+        const rows = table.getFilteredRowModel().rows;
+
+        // Kalau mau hanya yang tampil di page sekarang:
+        // const rows = table.getRowModel().rows;
+
+        const visibleLeafColumns = table.getAllLeafColumns().filter((col) => col.getIsVisible() && !(col.columnDef.meta as any)?.skipExport);
+
+        const exportData = rows.map((row) => {
+            const rowObj: Record<string, any> = {};
+
+            visibleLeafColumns.forEach((col) => {
+                const cell = row.getAllCells().find((c) => c.column.id === col.id);
+                const meta = col.columnDef.meta as any;
+
+                const value =
+                    meta?.exportValue && cell
+                        ? meta.exportValue(cell.getContext()) // pakai formatter custom kalau ada
+                        : cell?.getValue(); // fallback ke nilai accessor
+
+                const header = typeof col.columnDef.header === 'string' ? col.columnDef.header : col.id; // fallback kalau header berupa component
+
+                rowObj[header] = value ?? '';
+            });
+
+            return rowObj;
+        });
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        XLSX.utils.book_append_sheet(wb, ws, 'Recipes');
+        XLSX.writeFile(wb, 'recipes.xlsx');
+    };
 
     return (
         <div className="space-y-4">
-            {enableSearching && <DataTableToolbar table={table} filterColumns={filterColumn ?? []} placeholder="Search..." showResetButton={true} />}
+            {enableSearching && (
+                <DataTableToolbar
+                    table={table}
+                    filterColumns={filterColumn ?? []}
+                    placeholder="Search..."
+                    showResetButton={true}
+                    exportToExcel={handleExportXLSX}
+                />
+            )}
             <div className="rounded-md border">
                 <Table>
                     <TableHeader className="bg-muted/50">

@@ -30,6 +30,8 @@ type DashboardProps = {
     dataOmsetLastMonth: OmsetChartData[];
     cashOutToday: string;
     totalCashOut: string;
+    totalGajiAll: string;
+    load: boolean;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -57,6 +59,8 @@ export default function Dashboard({
     dataOmsetLastMonth,
     cashOutToday,
     totalCashOut,
+    totalGajiAll,
+    load,
 }: DashboardProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -77,12 +81,6 @@ export default function Dashboard({
                     </div>
                     <div className="rounded-xl border border-border dark:border-gray-700">
                         <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
-                            <h2 className="text-base font-semibold text-muted-foreground">Pengeluaran Hari ini</h2>
-                            <p className="text-1xl font-bold text-primary md:text-2xl"> {formatRupiah(parseFloat(cashOutToday))} </p>
-                        </Card>
-                    </div>
-                    <div className="rounded-xl border border-border dark:border-gray-700">
-                        <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
                             <h2 className="text-base font-semibold text-muted-foreground">Total Omset Bulan ini </h2>
                             <p className="text-1xl font-bold text-primary md:text-2xl">
                                 {formatRupiah(parseFloat(omsetThisMonth))} / {jumlahTransaksiThisMonth}
@@ -91,8 +89,14 @@ export default function Dashboard({
                     </div>
                     <div className="rounded-xl border border-border dark:border-gray-700">
                         <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
-                            <h2 className="text-base font-semibold text-muted-foreground">Total Pengeluaran Bulan ini</h2>
+                            <h2 className="text-base font-semibold text-muted-foreground">Total CashOut Bulan ini</h2>
                             <p className="text-1xl font-bold text-primary md:text-2xl"> {formatRupiah(parseFloat(totalCashOut))} </p>
+                        </Card>
+                    </div>
+                    <div className="rounded-xl border border-border dark:border-gray-700">
+                        <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
+                            <h2 className="text-base font-semibold text-muted-foreground">Saldo Operational</h2>
+                            <p className="text-1xl font-bold text-primary md:text-2xl">{formatRupiah(parseFloat(totalGajiAll))}</p>
                         </Card>
                     </div>
                 </div>

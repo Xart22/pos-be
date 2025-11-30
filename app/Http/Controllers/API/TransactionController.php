@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\BahanBaku;
 use App\Models\CashDrawer;
 use App\Models\Menu;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use App\Models\TransactionDetailVariant;
+use App\Models\VariantOption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class TransactionController extends Controller
 {
@@ -34,59 +37,139 @@ class TransactionController extends Controller
     {
         try {
             $transactions = [
-                'order_id' => $request->input('transaction_id'),
-                'user_id' => 1,
-                'promo_id' => $request->input('promo_id', null), // optional
-                'type' => $request->input('type'), // default to purchase
-                'status' => $request->input('status', 'PROCESS'), // default to pending
-                'table_number' => $request->input('table_number', null), // optional
-                'customer_name' => $request->input('customer_name', null), // optional
+                'order_id'       => $request->input('transaction_id'),
+                'user_id'        => 1,
+                'promo_id'       => $request->input('promo_id', null),
+                'type'           => $request->input('type'),
+                'status'         => $request->input('status', 'PROCESS'),
+                'table_number'   => $request->input('table_number', null),
+                'customer_name'  => $request->input('customer_name', null),
                 'payment_method' => $request->input('payment_method', 'CASH'),
-                'cash' => $request->input('cash', 0), // default to 0
-                'change' => $request->input('change', 0), // default to 0
-                'discount' => $request->input('discount', 0), // default to 0
-                'total_price' => $request->input('total'), // required
-                'payment_proof' => $request->input('payment_proof', null), // optional
-                'table_number' => $request->input('table_number', null), // optional
-                'sub_total' => $request->input('sub_total', 0), // default to 0
+                'cash'           => $request->input('cash', 0),
+                'change'         => $request->input('change', 0),
+                'discount'       => $request->input('discount', 0),
+                'total_price'    => $request->input('total'),
+                'payment_proof'  => $request->input('payment_proof', null),
+                'sub_total'      => $request->input('sub_total', 0),
             ];
-            DB::beginTransaction();
-            $transactions_id = Transaction::create($transactions)->id;
-
 
             $items = $request->input('items', []);
 
+            DB::beginTransaction();
+
+            // ==========================
+            // 1. SIMPAN TRANSAKSI
+            // ==========================
+            $transactionId = Transaction::create($transactions)->id;
+
+            // ==========================
+            // 2. PRELOAD MENU & VARIANT OPTION (HEMAT QUERY)
+            // ==========================
+            $menuIds = collect($items)->pluck('menu_id')->unique()->values();
+
+            $menus = Menu::with([
+                'recipes.bahanBakus.bahanBaku', // recipe + bahan baku
+            ])->whereIn('id', $menuIds)->get()->keyBy('id');
+
+            $variantOptionIds = collect($items)
+                ->flatMap(function ($item) {
+                    return collect($item['options'] ?? [])->pluck('variant_option_id');
+                })
+                ->filter()
+                ->unique()
+                ->values();
+
+            $variantOptions = VariantOption::whereIn('id', $variantOptionIds)
+                ->get()
+                ->keyBy('id');
+
+            // ==========================
+            // 3. LOOP ITEM TRANSAKSI
+            // ==========================
             foreach ($items as $item) {
+                $quantity = (int) ($item['quantity'] ?? 0);
+                $menuId   = $item['menu_id'];
 
-                $transactions_detail_id = TransactionDetail::create([
-                    'transaction_id' => $transactions_id,
-                    'menu_id' => $item['menu_id'],
-                    'quantity' => $item['quantity'],
-                ])->id;
-                Menu::where('id', $item['menu_id'])
-                    ->decrement('stock', $item['quantity']);
+                // Simpan detail
+                $transactionDetail = TransactionDetail::create([
+                    'transaction_id' => $transactionId,
+                    'menu_id'        => $menuId,
+                    'quantity'       => $quantity,
+                ]);
 
-                if (isset($item['options']) && is_array($item['options'])) {
-                    foreach ($item['options'] as $option) {
-                        TransactionDetailVariant::create([
-                            'transaction_detail_id' => $transactions_detail_id,
-                            'variant_id' => $option['variant_id'],
-                            'variant_options_id' => $option['variant_option_id'],
-                        ]);
-                    }
+                // Kurangi stok MENU (stok display)
+                Menu::where('id', $menuId)->decrement('stock', $quantity);
+
+                // Simpan varian yang dipilih
+                $options = $item['options'] ?? [];
+                foreach ($options as $option) {
+                    TransactionDetailVariant::create([
+                        'transaction_detail_id' => $transactionDetail->id,
+                        'variant_id'            => $option['variant_id'],
+                        'variant_options_id'    => $option['variant_option_id'],
+                    ]);
+                }
+
+                // ==================================
+                // 4. KURANGI STOK BAHAN BAKU (INTI)
+                // ==================================
+                $menu = $menus->get($menuId);
+                if (!$menu || $quantity <= 0) {
+                    continue;
+                }
+
+                // Ambil nama-nama variant option yang dipilih
+                $selectedOptionNames = collect($options)
+                    ->map(function ($opt) use ($variantOptions) {
+                        $vo = $variantOptions->get($opt['variant_option_id'] ?? null);
+                        return $vo ? $vo->name : null;
+                    })
+                    ->filter()
+                    ->map(fn($name) => Str::lower($name))
+                    ->values();
+
+                // Pilih recipe sesuai aturan (mirip di controller laporanmu)
+                $recipe = null;
+
+                if ($selectedOptionNames->contains(fn($n) => Str::contains($n, 'large'))) {
+                    // Recipe untuk Large (misal yang punya variant_options_id != null)
+                    $recipe = $menu->recipes->firstWhere('variant_options_id', '!=', null);
+                } elseif ($selectedOptionNames->contains(fn($n) => Str::contains($n, 'reguler'))) {
+                    // Recipe reguler = recipe pertama
+                    $recipe = $menu->recipes->first();
+                } else {
+                    // Default: pakai recipe pertama saja
+                    $recipe = $menu->recipes->first();
+                }
+
+                if (!$recipe) {
+                    continue; // kalau belum ada recipe, jangan kurangi stok
+                }
+
+                // Loop bahan di recipe tersebut dan kurangi stok
+                foreach ($recipe->bahanBakus as $bahanResep) {
+                    $bahanBakuId = $bahanResep->bahan_baku_id;
+                    $jumlahPerCup = (float) $bahanResep->jumlah; // misal 20 Gram per cup
+                    $totalDipakai = $jumlahPerCup * $quantity;
+
+                    // Kurangi stok di tabel bahan baku
+                    BahanBaku::where('id', $bahanBakuId)
+                        ->decrement('stock', $totalDipakai);
                 }
             }
 
             DB::commit();
+
             return response()->json([
                 'message' => 'Transaction processed successfully',
-                'data' => $request->all()
+                'data'    => $request->all(),
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json([
                 'message' => 'Failed to process transaction',
-                'error' => $th->getMessage()
+                'error'   => $th->getMessage(),
             ], 500);
         }
     }

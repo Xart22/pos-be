@@ -11,6 +11,13 @@ export const columns: ColumnDef<Recipe>[] = [
         header: ({ column }) => <DataTableColumnHeader column={column} title="Menu" />,
         cell: ({ getValue }) => <div className="w-[120px]">{getValue() as string}</div>,
         enableSorting: true,
+        meta: {
+            exportValue: ({ row }: any) => {
+                const menuName = row.original.menu?.name ?? '';
+                const variant = row.original.variant_option?.name ? ` - ${row.original.variant_option.name}` : '';
+                return `${menuName}${variant}`;
+            },
+        },
     },
     {
         accessorKey: 'instructions',
@@ -18,6 +25,9 @@ export const columns: ColumnDef<Recipe>[] = [
         header: ({ column }) => <DataTableColumnHeader column={column} title="Instructions" />,
         cell: ({ row }) => <div className="w-[80px]">{row.getValue('instructions')}</div>,
         enableSorting: false,
+        meta: {
+            exportValue: ({ row }: any) => row.original.instructions ?? '',
+        },
     },
 
     {
@@ -32,9 +42,10 @@ export const columns: ColumnDef<Recipe>[] = [
         header: ({ column }) => <DataTableColumnHeader column={column} title="Bahan Baku" />,
         cell: ({ row }) => {
             const bahanBakus = row.getValue('bahan_bakus') as { name: string; jumlah: number; satuan: string }[];
+
             return (
                 <div className="w-[200px]">
-                    {bahanBakus.map((bahan, index) => (
+                    {bahanBakus?.map((bahan, index) => (
                         <div key={index} className="flex justify-between">
                             <span>{bahan.name} : </span>
                             <span>
@@ -46,5 +57,11 @@ export const columns: ColumnDef<Recipe>[] = [
             );
         },
         enableSorting: false,
+        meta: {
+            exportValue: ({ row }: any) => {
+                const bahanBakus = row.original.bahan_bakus ?? [];
+                return bahanBakus.map((b: any) => `${b.bahan_baku.name}: ${b.jumlah} ${b.satuan}`).join('\n'); // Excel bisa wrap text
+            },
+        },
     },
 ];

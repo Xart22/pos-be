@@ -9,6 +9,7 @@ interface DataTableToolbarProps<TData> {
     filterColumns: string[]; // multiple column names
     placeholder?: string;
     showResetButton?: boolean;
+    exportToExcel?: () => void;
 }
 
 export function DataTableToolbar<TData>({
@@ -16,6 +17,7 @@ export function DataTableToolbar<TData>({
     filterColumns = ['name'],
     placeholder = 'Search...',
     showResetButton = true,
+    exportToExcel,
 }: DataTableToolbarProps<TData>) {
     // Gunakan global filter value
     const globalFilter = table.getState().globalFilter ?? '';
@@ -48,6 +50,9 @@ export function DataTableToolbar<TData>({
                     </Button>
                 )}
             </div>
+            <Button variant="outline" onClick={() => exportToExcel && exportToExcel()}>
+                Export to Excel
+            </Button>
         </div>
     );
 }

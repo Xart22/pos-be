@@ -7,7 +7,9 @@ use App\Models\Cashbon;
 use App\Models\CashOut;
 use App\Models\Category;
 use App\Models\Menu;
+use App\Models\Operational;
 use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -34,18 +36,54 @@ class DashboardController extends Controller
         $endOfPeriod   = $now->copy()->endOfMonth();
 
 
+
         $startOfPeriod = \Carbon\Carbon::parse($startOfPeriod)->startOfDay();
         $endOfPeriod = \Carbon\Carbon::parse($endOfPeriod)->endOfDay();
 
         // Batas "hari ini"
         $todayStart = $now->copy()->startOfDay();
         $todayEnd   = $now->copy()->endOfDay();
-        $yesterday = now()->subDay();
+
+
         if (Auth::user()->role === 'admin') {
+            $currentMonth = date("n");
+            $currentYear = date("Y");
+            $currentDate = date("d");
+
+            $numberOfDays = cal_days_in_month(CAL_GREGORIAN, $currentMonth, $currentYear);
+
+
+            $user = User::where('role', "!=", 'admin')->with(['absensiThisMonth', 'cashbons'])->get();
+            $load = [];
+            $totalGajiAll = (Operational::all()->sum('price') / $numberOfDays) * $currentDate;
+
+            foreach ($user as $usr) {
+                $baseGaji = $usr->base_gaji / 26;
+                $totalGaji = 0;
+                foreach ($usr->absensiThisMonth as $absensi) {
+                    if ($absensi->shift === 'Full Time') {
+                        $totalGaji += $baseGaji * 2;
+                    } else {
+                        $totalGaji += $baseGaji;
+                    }
+                }
+
+
+                $load[$usr->name]['base_gaji'] = number_format($baseGaji, 0, ',', '.');
+                $load[$usr->name]['cashbon'] = $usr->cashbons->sum('jumlah');
+                $load[$usr->name]['netto'] = $totalGaji - $usr->cashbons->sum('jumlah');
+            }
+
+            foreach ($load as $name => $data) {
+                $totalGajiAll += $data['netto'];
+            }
+
+
+
 
             $omsetToday = Transaction::whereBetween('created_at', ["{$todayStart}", "{$todayEnd}"])
                 ->sum('total_price');
-            $jumlahTransaksiToday = Transaction::whereBetween('created_at',  ["{$todayStart}", "{$todayEnd}"])
+            $jumlahTransaksiToday = Transaction::whereBetween('created_at',  ["{$todayStart}", "{$todayEnd}"])->where("total_price", "!=", 0)
                 ->count();
 
             $totalTransaksiQris = Transaction::where('payment_method', 'qris')
@@ -89,7 +127,8 @@ class DashboardController extends Controller
                 ->get();
 
 
-            $transactions = Transaction::whereDate('created_at', $now->format('Y-m-d'))->get();
+            $transactions = Transaction::whereDate('created_at', $now->format('Y-m-d'))->where("total_price", "!=", 0)->get();
+
             // $transactions = Transaction::whereBetween('created_at', [
             //     $startOfPeriod->copy()->subMonth(),
             //     $endOfPeriod->copy()->subMonth(),
@@ -200,8 +239,6 @@ class DashboardController extends Controller
 
 
 
-
-
             return Inertia::render('dashboard/dashboard', [
                 'omsetToday' => $omsetToday,
                 'jumlahTransaksiToday' => $jumlahTransaksiToday,
@@ -223,6 +260,8 @@ class DashboardController extends Controller
                 'txUnknown' => $transUnknown,
                 'cashOutToday' => $cashOutToday,
                 'totalCashOut' => $totalCashOut,
+                'totalGajiAll' => $totalGajiAll,
+                'load' => $load,
             ]);
         }
 
@@ -233,7 +272,6 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($absensi) {
                 $baseGaji = Auth::user()->base_gaji / 26; // Assuming 26 working days in a month
-                $absensi->shift = $absensi->shift;
                 $absensi->take_home_pay = $absensi->shift === 'Full Time' ? number_format($baseGaji * 2, 0, ',', '.') : number_format($baseGaji, 0, ',', '.');
                 return $absensi;
             });

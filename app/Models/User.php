@@ -52,4 +52,17 @@ class User extends Authenticatable
     {
         return $this->hasMany(Absensi::class);
     }
+
+    public function absensiThisMonth()
+    {
+        return $this->hasMany(Absensi::class)
+            ->whereYear('tanggal', now()->year)
+            ->whereMonth('tanggal', now()->month);
+    }
+
+    public function cashbons()
+    {
+        return $this->hasMany(Cashbon::class)->whereYear('tanggal', now()->year)
+            ->whereMonth('tanggal', now()->month)->where('status', "Disetujui");
+    }
 }
