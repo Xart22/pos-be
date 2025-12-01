@@ -41,7 +41,7 @@ const mainNavItems = [
             {
                 title: 'Bahan Baku',
                 url: '/master-data/bahan-baku',
-                isAdmin: false,
+                isAdmin: true,
             },
             {
                 title: 'Recipes',

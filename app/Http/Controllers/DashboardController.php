@@ -267,7 +267,7 @@ class DashboardController extends Controller
 
 
         $absensis = Absensi::where('user_id', Auth::id())
-            ->whereBetween('tanggal', [$startOfPeriod->format('Y-m-d'), $endOfPeriod->format('Y-m-d')])
+            ->where('keterangan', null)
             ->orderBy('tanggal', 'desc')
             ->get()
             ->map(function ($absensi) {
@@ -289,7 +289,7 @@ class DashboardController extends Controller
                 $cleanValue = str_replace(['Rp', '.', ','], '', $absensi->take_home_pay);
                 return (int)$cleanValue;
             }),
-            'paid' => Cashbon::where('user_id', Auth::id())->where('status', 'Disetujui')->sum('jumlah'),
+            'paid' => Cashbon::where('user_id', Auth::id())->where('status', 'Disetujui')->whereBetween('tanggal', [$startOfPeriod->format('Y-m-d'), $endOfPeriod->format('Y-m-d')])->sum('jumlah'),
 
             'type' => $type,
         ]);

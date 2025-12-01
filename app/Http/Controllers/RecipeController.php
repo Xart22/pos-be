@@ -83,6 +83,9 @@ class RecipeController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (auth()->user()->role !== 'admin') {
+            return redirect()->route('recipes.index')->with('error', 'Anda tidak memiliki izin untuk mengedit resep.');
+        }
         // Logic to update a recipe
         $data = $request->validate([
             'rows' => 'required|array|min:1',
