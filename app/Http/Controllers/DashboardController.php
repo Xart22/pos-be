@@ -55,7 +55,8 @@ class DashboardController extends Controller
 
             $user = User::where('role', "!=", 'admin')->with(['absensiThisMonth', 'cashbons'])->get();
             $load = [];
-            $totalGajiAll = (Operational::all()->sum('price') / $numberOfDays) * $currentDate;
+            $totalGajiAll = (Operational::all()->sum('price') / $numberOfDays) * (int) $currentDate;
+
 
             foreach ($user as $usr) {
                 $baseGaji = $usr->base_gaji / 26;
@@ -69,15 +70,15 @@ class DashboardController extends Controller
                 }
 
 
-                $load[$usr->name]['base_gaji'] = number_format($baseGaji, 0, ',', '.');
+                $load[$usr->name]['base_gaji'] = $baseGaji;
                 $load[$usr->name]['cashbon'] = $usr->cashbons->sum('jumlah');
                 $load[$usr->name]['netto'] = $totalGaji - $usr->cashbons->sum('jumlah');
             }
 
             foreach ($load as $name => $data) {
+
                 $totalGajiAll += $data['netto'];
             }
-
 
 
 
@@ -232,10 +233,9 @@ class DashboardController extends Controller
             // $transUnknown sudah numerik
 
 
-            $totalCashOut = CashOut::whereBetween('created_at', ["{$todayStart}", "{$todayEnd}"])
+            $totalCashOut = CashOut::whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])
                 ->sum('amount');
-            $cashOutToday = CashOut::whereDate('tanggal', $now->format('Y-m-d'))
-                ->sum('amount');
+
 
 
 
@@ -258,7 +258,7 @@ class DashboardController extends Controller
                 'txDrink' => $transDrink,
                 'txFood' => $transFood,
                 'txUnknown' => $transUnknown,
-                'cashOutToday' => $cashOutToday,
+
                 'totalCashOut' => $totalCashOut,
                 'totalGajiAll' => $totalGajiAll,
                 'load' => $load,

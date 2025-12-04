@@ -256,6 +256,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                 },
                 id: 'hpp',
                 header: 'HPP & Margin',
+                enableSorting: true,
                 cell: ({ getValue }: any) => {
                     const data = getValue() as {
                         bahanBakuList: {
@@ -320,7 +321,6 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                         </div>
                     );
                 },
-                enableSorting: false,
             });
 
             // 2) Kolom numerik khusus untuk Excel
@@ -328,6 +328,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                 {
                     id: 'total_hpp',
                     header: 'Total HPP (Rp)',
+                    enableSorting: true,
                     accessorFn: (row: any) => {
                         const bahanBakuList =
                             row.bahan_bakus?.map((bahan: any) => {
@@ -346,6 +347,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                 {
                     id: 'margin_rp',
                     header: 'Margin (Rp)',
+                    enableSorting: true,
                     accessorFn: (row: any) => {
                         const bahanBakuList =
                             row.bahan_bakus?.map((bahan: any) => {
@@ -367,6 +369,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                 {
                     id: 'margin_percent',
                     header: 'Margin (%)',
+                    enableSorting: true,
                     accessorFn: (row: any) => {
                         const bahanBakuList =
                             row.bahan_bakus?.map((bahan: any) => {
