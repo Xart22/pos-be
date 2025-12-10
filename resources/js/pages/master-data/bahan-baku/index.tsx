@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { convertToRupiah } from '@/lib/utils';
 import { BahanBaku, BreadcrumbItem } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
@@ -309,6 +310,17 @@ export default function BahanBakuPage({ bahanBakus }: BahanBakuProps) {
                 {/* === Table === */}
                 <div className="mt-6 rounded-xl border border-border">
                     <div className="px-4 py-8 md:px-8">
+                        {/* estimasi assets */}
+                        <div className="mb-4 flex justify-end gap-4">
+                            <div className="mb-4 text-sm font-medium text-muted-foreground">
+                                Estimasi Assets: {convertToRupiah(bahanBakus.reduce((acc, bahan) => acc + (bahan.total || 0), 0).toFixed(0), 'Rp. ')}
+                            </div>
+                            <div className="mb-4 text-sm font-medium text-muted-foreground">
+                                Estimasi Omset:
+                                {/* margin 60% */}
+                                {convertToRupiah((bahanBakus.reduce((acc, bahan) => acc + (bahan.total || 0), 0) * 1.6).toFixed(0), 'Rp. ')}
+                            </div>
+                        </div>
                         <DataTable columns={columns} data={bahanBakus} filterColumn={['kode', 'name']} enableSearching />
                     </div>
                 </div>

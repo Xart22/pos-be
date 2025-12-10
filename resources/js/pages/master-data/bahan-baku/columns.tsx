@@ -45,4 +45,13 @@ export const columns: ColumnDef<BahanBaku>[] = [
         cell: ({ row }) => <div className="w-[80px]">{row.getValue('per_unit')}</div>,
         enableSorting: true,
     },
+    {
+        accessorKey: 'total',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Total" />,
+        cell: ({ row }) => {
+            const value = row.getValue('total') as number;
+            return <div className="w-[80px]">{convertToRupiah((value || 0).toFixed(0), 'Rp. ')}</div>;
+        },
+        enableSorting: true,
+    },
 ];

@@ -10,9 +10,24 @@ class BahanBakuController extends Controller
 {
     public function index()
     {
-        $bahanBaku = BahanBaku::all();
+        $bahanBaku = BahanBaku::all()->map(function ($bahan) {
+            // default
+            $bahan->total = 0;
+
+            if ($bahan->per_unit == 0 || $bahan->stock <= 0) {
+                return $bahan;
+            }
+
+            $unitPrice = $bahan->harga / $bahan->per_unit; // harga per 1 satuan
+            $bahan->total = $unitPrice * $bahan->stock;
+
+            return $bahan;
+        });
+
+
         return Inertia::render('master-data/bahan-baku/index', [
             'bahanBakus' => $bahanBaku,
+
         ]);
     }
 

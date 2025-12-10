@@ -110,6 +110,7 @@ export interface BahanBaku {
     satuan: string;
     deskripsi?: string; // Optional field
     per_unit: number;
+    total?: number;
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
