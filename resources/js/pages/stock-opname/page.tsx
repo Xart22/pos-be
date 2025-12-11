@@ -1,37 +1,12 @@
 import { DataTable } from '@/components/data-table';
+import { DataTableColumnHeader } from '@/components/data-table-column-header';
 import { Button } from '@/components/ui/button';
+import { formatQty } from '@/helper/formatQty';
 import formatRupiah from '@/helper/formatRupiah';
 import AppLayout from '@/layouts/app-layout';
+import { IngredientSummary, StockRow } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { FormEvent, useMemo, useState } from 'react';
-
-type UsedIngredient = {
-    bahan_baku_id: number;
-    name: string;
-    unit: string;
-    quantity: number;
-};
-
-type StockRow = {
-    name: string;
-    category: number | null;
-    quantity: number;
-    base_price: number;
-    variant_price: number;
-    total_price: number;
-    variants: any[];
-    recipe: any;
-    used_ingredients: UsedIngredient[];
-    menu: string;
-};
-
-type IngredientSummary = {
-    bahan_baku_id: number;
-    name: string;
-    unit: string;
-    quantity: number;
-    cost?: number;
-};
 
 type PageProps = {
     startDate: string;
@@ -82,9 +57,6 @@ export default function StockOpnamePage() {
         const totalQtyAll = sum_ingredients.reduce((sum, ing) => sum + Number(ing.quantity || 0), 0);
         return { totalIngredient, totalQtyAll };
     }, [sum_ingredients]);
-
-    // ====== HELPER FORMAT QTY ======
-    const formatQty = (qty: number, unit?: string) => `${qty % 1 === 0 ? qty.toFixed(0) : qty.toFixed(2)}${unit ? ' ' + unit : ''}`;
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Stock Opname', href: '/stock-opname' }]}>
@@ -153,33 +125,45 @@ export default function StockOpnamePage() {
                 <div className="rounded-xl border bg-white p-4 shadow-sm dark:bg-gray-900">
                     <h2 className="mb-3 text-lg font-semibold">Rekap Pemakaian Bahan Baku</h2>
                     <div className="max-h-[400px] w-full overflow-auto rounded-lg border">
-                        <table className="w-full table-auto border-collapse text-sm">
-                            <thead className="bg-muted/50">
-                                <tr>
-                                    <th className="px-3 py-2 text-left font-semibold">#</th>
-                                    <th className="px-3 py-2 text-left font-semibold">Bahan Baku</th>
-                                    <th className="px-3 py-2 text-right font-semibold">Quantity</th>
-                                    <th className="px-3 py-2 text-right font-semibold">Cost</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sum_ingredients.length === 0 && (
-                                    <tr>
-                                        <td colSpan={4} className="px-3 py-4 text-center text-muted-foreground">
-                                            Belum ada pemakaian bahan baku pada periode ini.
-                                        </td>
-                                    </tr>
-                                )}
-                                {sum_ingredients.map((ing, idx) => (
-                                    <tr key={ing.bahan_baku_id} className="border-t">
-                                        <td className="px-3 py-2">{idx + 1}</td>
-                                        <td className="px-3 py-2">{ing.name}</td>
-                                        <td className="px-3 py-2 text-right">{formatQty(Number(ing.quantity), ing.unit)}</td>
-                                        <td className="px-3 py-2 text-right">{ing.cost ? formatRupiah(ing.cost) : '-'}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <DataTable
+                            columns={[
+                                // === Kolom Bahan Baku ===
+                                {
+                                    accessorKey: 'name', // harus sesuai field data
+                                    id: 'name', // id optional tapi bagus dikasih
+                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Bahan Baku" />,
+                                    cell: ({ getValue }) => <span>{getValue() as unknown as string}</span>,
+                                    enableSorting: true,
+                                },
+
+                                // === Kolom Quantity (sort by angka) ===
+                                {
+                                    accessorFn: (row: IngredientSummary) => Number(row.quantity) || 0,
+                                    id: 'quantity', // id wajib kalau pakai accessorFn
+                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Quantity" />,
+                                    cell: ({ row, getValue }) => {
+                                        const qty = getValue() as number;
+                                        const unit = (row.original as IngredientSummary).unit;
+                                        return formatQty(qty, unit);
+                                    },
+                                    enableSorting: true,
+                                },
+
+                                // === Kolom Cost (sort by angka) ===
+                                {
+                                    accessorFn: (row: IngredientSummary) => Number(row.cost ?? 0),
+                                    id: 'cost',
+                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Cost" />,
+                                    cell: ({ getValue }) => {
+                                        const cost = getValue() as number;
+                                        return cost ? formatRupiah(cost) : '-';
+                                    },
+                                    enableSorting: true,
+                                },
+                            ]}
+                            data={sum_ingredients}
+                            enableSearching={true}
+                        />
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">*Cost dihitung berdasarkan harga bahan baku per unit.</p>
                     {/* Total Cost */}
@@ -191,43 +175,7 @@ export default function StockOpnamePage() {
                     </div>
                 </div>
                 {/* =================== TABEL FOOD & DRINK =================== */}
-                <div className="grid gap-4 lg:grid-cols-2">
-                    {/* FOOD */}
-                    <div className="rounded-xl border bg-white p-4 shadow-sm dark:bg-gray-900">
-                        <h2 className="mb-3 text-lg font-semibold">Penjualan Food</h2>
-                        <div className="max-h-[350px] w-full overflow-auto rounded-lg border">
-                            <table className="w-full table-auto border-collapse text-sm">
-                                <thead className="bg-muted/50">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left font-semibold">Menu</th>
-                                        <th className="px-3 py-2 text-right font-semibold">Qty</th>
-                                        <th className="px-3 py-2 text-right font-semibold">Base Price</th>
-                                        <th className="px-3 py-2 text-right font-semibold">Variant Price</th>
-                                        <th className="px-3 py-2 text-right font-semibold">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {transactions_food.length === 0 && (
-                                        <tr>
-                                            <td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">
-                                                Tidak ada transaksi food pada periode ini.
-                                            </td>
-                                        </tr>
-                                    )}
-                                    {transactions_food.map((row, idx) => (
-                                        <tr key={`${row.name}-${idx}`} className="border-t">
-                                            <td className="px-3 py-2">{row.name}</td>
-                                            <td className="px-3 py-2 text-right">{row.quantity}</td>
-                                            <td className="px-3 py-2 text-right">{formatRupiah(row.base_price)}</td>
-                                            <td className="px-3 py-2 text-right">{formatRupiah(row.variant_price)}</td>
-                                            <td className="px-3 py-2 text-right">{formatRupiah(row.total_price)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
+                <div className="grid gap-4 lg:grid-cols-1">
                     {/* DRINK */}
                     <div className="rounded-xl border bg-white p-4 shadow-sm dark:bg-gray-900">
                         <h2 className="mb-3 text-lg font-semibold">Penjualan Drink</h2>
@@ -235,14 +183,78 @@ export default function StockOpnamePage() {
                             <DataTable
                                 columns={[
                                     { accessorKey: 'menu', header: 'Menu' },
-                                    { accessorKey: 'quantity', header: 'Qty', cell: (info) => info.getValue<number>().toString() },
-                                    { accessorKey: 'base_price', header: 'Base Price', cell: (info) => formatRupiah(info.getValue<number>()) },
-                                    { accessorKey: 'variant_price', header: 'Variant Price', cell: (info) => formatRupiah(info.getValue<number>()) },
-                                    { accessorKey: 'total_price', header: 'Total', cell: (info) => formatRupiah(info.getValue<number>()) },
+                                    {
+                                        accessorKey: 'quantity',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Quantity" />,
+
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'base_price',
+                                        header: 'Base Price',
+                                        cell: (info) => formatRupiah(info.getValue<number>()),
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'variant_price',
+                                        header: 'Variant Price',
+                                        cell: (info) => formatRupiah(info.getValue<number>()),
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'total_price',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Total Price" />,
+                                        cell: (info) => formatRupiah(info.getValue<number>()),
+                                        enableSorting: true,
+                                    },
                                 ]}
                                 data={transactions_drink}
                                 enableSearching={true}
                             />
+                        </div>
+
+                        <div className="mt-4 flex justify-end">
+                            <span className="font-semibold">Total : </span>
+                            <span className="ml-2 font-bold">
+                                {formatRupiah(transactions_drink.reduce((sum, item) => sum + Number(item.total_price || 0), 0))}
+                            </span>
+                        </div>
+                    </div>
+                    {/* FOOD */}
+                    <div className="rounded-xl border bg-white p-4 shadow-sm dark:bg-gray-900">
+                        <h2 className="mb-3 text-lg font-semibold">Penjualan Food</h2>
+                        <div className="max-h-[350px] w-full overflow-auto rounded-lg border">
+                            <DataTable
+                                columns={[
+                                    { accessorKey: 'name', header: 'Menu' },
+                                    {
+                                        accessorKey: 'quantity',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Quantity" />,
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'base_price',
+                                        header: 'Base Price',
+                                        cell: (info) => formatRupiah(info.getValue<number>()),
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'total_price',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Total Price" />,
+                                        cell: (info) => formatRupiah(info.getValue<number>()),
+                                        enableSorting: true,
+                                    },
+                                ]}
+                                data={transactions_food}
+                                enableSearching={true}
+                            />
+                        </div>
+
+                        <div className="mt-4 flex justify-end">
+                            <span className="font-semibold">Total : </span>
+                            <span className="ml-2 font-bold">
+                                {formatRupiah(transactions_food.reduce((sum, item) => sum + Number(item.total_price || 0), 0))}
+                            </span>
                         </div>
                     </div>
                 </div>

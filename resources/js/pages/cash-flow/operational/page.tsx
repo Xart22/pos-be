@@ -92,7 +92,10 @@ export default function OperationalPage({ operationals }: OperationalProps) {
                 {/* === Table Daftar Bahan Baku === */}
                 <div className="mt-6 rounded-xl border border-border">
                     <div className="px-4 py-8 md:px-8">
-                        {/* <DataTable columns={columns} data={operationals} filterColumn={['kode', 'name', 'satuan']} /> */}
+                        Total :
+                        {operationals
+                            .reduce((sum, item) => sum + Number(item.price), 0)
+                            .toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
                     </div>
                 </div>
             </div>

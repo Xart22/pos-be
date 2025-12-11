@@ -53,6 +53,11 @@ class User extends Authenticatable
         return $this->hasMany(Absensi::class);
     }
 
+    public function cashbon()
+    {
+        return $this->hasMany(Cashbon::class);
+    }
+
     public function absensiThisMonth()
     {
         return $this->hasMany(Absensi::class)

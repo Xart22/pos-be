@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Operational;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -12,7 +13,10 @@ class OperationalController extends Controller
      */
     public function index()
     {
-        return Inertia::render('cash-flow/operational/page');
+        $operationals = Operational::orderBy('created_at', 'desc')->get();
+        return Inertia::render('cash-flow/operational/page', [
+            'operationals' => $operationals,
+        ]);
     }
 
     /**

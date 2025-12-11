@@ -180,3 +180,38 @@ export interface TransactionItem {
     name: string;
     quantity: number;
 }
+
+export interface CashOut {
+    id: number;
+    desc: string;
+    amount: number;
+    tanggal: string;
+}
+
+export type UsedIngredient = {
+    bahan_baku_id: number;
+    name: string;
+    unit: string;
+    quantity: number;
+};
+
+export type StockRow = {
+    name: string;
+    category: number | null;
+    quantity: number;
+    base_price: number;
+    variant_price: number;
+    total_price: number;
+    variants: any[];
+    recipe: any;
+    used_ingredients: UsedIngredient[];
+    menu: string;
+};
+
+export type IngredientSummary = {
+    bahan_baku_id: number;
+    name: string;
+    unit: string;
+    quantity: number;
+    cost?: number;
+};

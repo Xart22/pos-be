@@ -6,6 +6,7 @@ import Select from 'react-select';
 import { z } from 'zod';
 
 import { DataTable } from '@/components/data-table';
+import { DataTableColumnHeader } from '@/components/data-table-column-header';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -255,7 +256,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                     };
                 },
                 id: 'hpp',
-                header: 'HPP & Margin',
+                header: ({ column }) => <DataTableColumnHeader column={column} title="HPP & Margin" />,
                 enableSorting: true,
                 cell: ({ getValue }: any) => {
                     const data = getValue() as {
@@ -346,7 +347,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                 },
                 {
                     id: 'margin_rp',
-                    header: 'Margin (Rp)',
+                    header: ({ column }) => <DataTableColumnHeader column={column} title="Margin (Rp)" />,
                     enableSorting: true,
                     accessorFn: (row: any) => {
                         const bahanBakuList =
@@ -368,7 +369,7 @@ export default function RecipesPage({ recipes, bahanBaku, menus, variantOptions 
                 },
                 {
                     id: 'margin_percent',
-                    header: 'Margin (%)',
+                    header: ({ column }) => <DataTableColumnHeader column={column} title="Margin (%)" />,
                     enableSorting: true,
                     accessorFn: (row: any) => {
                         const bahanBakuList =
