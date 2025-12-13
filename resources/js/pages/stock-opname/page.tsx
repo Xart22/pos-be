@@ -201,6 +201,7 @@ export default function StockOpnamePage() {
                                         cell: (info) => formatRupiah(info.getValue<number>()),
                                         enableSorting: true,
                                     },
+
                                     {
                                         accessorKey: 'total_price',
                                         header: ({ column }) => <DataTableColumnHeader column={column} title="Total Price" />,

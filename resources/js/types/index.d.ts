@@ -193,6 +193,7 @@ export type UsedIngredient = {
     name: string;
     unit: string;
     quantity: number;
+    cost: number;
 };
 
 export type StockRow = {
