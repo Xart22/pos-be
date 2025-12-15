@@ -216,3 +216,18 @@ export type IngredientSummary = {
     quantity: number;
     cost?: number;
 };
+
+export type CashBon = {
+    id: number;
+    jumlah: number;
+    tanggal: string;
+};
+
+export type EmployeeReport = {
+    name: string;
+    total_gaji: number;
+    base_gaji: number;
+    cashbon: CashBon[];
+    total_cashbon: number;
+    full_time: number;
+};

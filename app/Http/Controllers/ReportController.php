@@ -7,6 +7,7 @@ use App\Models\Operational;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ReportController extends Controller
@@ -34,27 +35,74 @@ class ReportController extends Controller
         $sumOperational = $operational->sum('price');
         $cashOut = CashOut::whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])->get();
 
-        $data_karyawan = [];
-        //get absesnsi and cashbon for all users except admin where startOfPeriod and endOfPeriod and casbon is not null
-        $user = User::where('role', "!=", 'admin')->with(['absensi', 'cashbon'])->whereHas('absensi', function ($query) use ($startOfPeriod, $endOfPeriod) {
-            $query->whereMonth('tanggal', $startOfPeriod->month)
-                ->whereYear('tanggal', $startOfPeriod->year);
-        })->get();
-        foreach ($user as $u) {
-            $gajiHadir = $u->absensi->count() * ($u->base_gaji / 26);
-            $totalCashbon = $u->cashbon->whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])->sum('amount');
-            array_push($data_karyawan, [
+
+        //merge cashout if same tanggal
+        $cashOut = $cashOut->groupBy('tanggal')->map(function ($item, $key) {
+            return [
+                'tanggal' => $key,
+                'description' => $item->pluck('description')->join('\n '),
+                'amount' => $item->sum('amount'),
+            ];
+        })->values();
+        $users = User::query()
+            ->where('role', '!=', 'admin')
+            ->withCount(['absensi as hadir_count' => function ($q) use ($startOfPeriod, $endOfPeriod) {
+                $q->whereBetween('tanggal', [$startOfPeriod, $endOfPeriod]);
+            }])->withCount(['absensi as shift' => function ($q) use ($startOfPeriod, $endOfPeriod) {
+                $q->whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])->where('shift', 'Full Time');
+            }])
+            ->with(['cashbon' => function ($q) use ($startOfPeriod, $endOfPeriod) {
+                $q->whereBetween('tanggal', [$startOfPeriod, $endOfPeriod]);
+            }])
+            ->get();
+
+        foreach ($users as $u) {
+            $gajiHadir = (int)$u->hadir_count * ((float)$u->base_gaji / 26);
+            $totalCashbon = (float)$u->cashbon->sum('jumlah');
+            $gajiFulltime = (int)$u->shift * ((float)$u->base_gaji / 26);
+            $gajiHadir += $gajiFulltime;
+
+            $data_karyawan[] = [
                 'name' => $u->name,
-                'base_gaji' => $u->base_gaji,
+                'base_gaji' => (float)$u->base_gaji,
                 'total_gaji' => $gajiHadir,
-                'cashbon' => $u->cashbon->whereBetween('tanggal', [$startOfPeriod, $endOfPeriod]),
+                'cashbon' => $u->cashbon->values(),
                 'total_cashbon' => $totalCashbon,
                 'gaji_bersih' => $gajiHadir - $totalCashbon,
-            ]);
+                'hadir' => (int)$u->hadir_count,
+                'full_time' => $u->shift,
+            ];
         }
 
-        $usedIngredients = $this->generateReport($startOfPeriod, $endOfPeriod);
 
+        $usedIngredients = $this->generateReport($startOfPeriod, $endOfPeriod);
+        $omset = DB::table('transactions')
+            ->selectRaw('DATE(created_at) as date')
+            ->selectRaw('SUM(total_price) as omset')
+            ->selectRaw("SUM(CASE WHEN payment_method = 'QRIS' THEN total_price ELSE 0 END) as qris")
+            ->selectRaw("SUM(CASE WHEN payment_method = 'CASH' THEN total_price ELSE 0 END) as cash")
+            ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+            ->groupByRaw('DATE(created_at)');
+
+        $drawer = DB::table('cash_drawers')
+            ->selectRaw('DATE(created_at) as date')
+            ->selectRaw('SUM(opening_balance) as opening_balance')
+            ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+            ->groupByRaw('DATE(created_at)');
+
+        $dataOmsetDaily = DB::query()
+            ->fromSub($omset, 'o')
+            ->leftJoinSub($drawer, 'd', 'o.date', '=', 'd.date')
+            ->orderBy('o.date')
+            ->get()
+            ->map(fn($r) => [
+                'date'          => $r->date,
+                'omset'         => (float) $r->omset,
+                'qris'          => (float) $r->qris,
+                'opening_balance'  => (float) ($r->opening_balance ?? 0),
+                'cash'          => (float) $r->cash,
+                'total_cash'   => (float) $r->cash + (float) ($r->opening_balance ?? 0),
+            ]);
 
         return Inertia::render('report/page', [
             'operational'       => $operational,
@@ -65,6 +113,7 @@ class ReportController extends Controller
             'transactions_food' => $usedIngredients['transactions_food'],
             'transactions_drink' => $usedIngredients['transactions_drink'],
             'period' => $startOfPeriod->format('Y-m'),
+            'data_omset_daily'  => $dataOmsetDaily,
         ]);
     }
 
@@ -282,6 +331,7 @@ class ReportController extends Controller
                 $sumIngredients[$id]['cost'] += $ingredient['cost'];
             }
         }
+
         return [
             'transactions_food'    => array_values($transFood),
             'transactions_drink'   => array_values($transDrink),
