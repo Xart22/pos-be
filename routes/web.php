@@ -31,6 +31,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('dashboard/absensi', [DashboardController::class, 'handleSubmit'])
         ->name('dashboard.absensi.submit');
 
+    Route::get('/master-data/recipes', [RecipeController::class, 'index'])
+        ->name('recipes.index');
+});
+
+Route::middleware(['auth', 'verified',])->group(function () {
+
     Route::get('/master-data/bahan-baku', [BahanBakuController::class, 'index'])
         ->name('bahan-baku.index');
 
@@ -42,10 +48,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::delete('/master-data/bahan-baku/{kode}', [BahanBakuController::class, 'destroy'])
         ->name('bahan-baku.destroy');
-
-
-    Route::get('/master-data/recipes', [RecipeController::class, 'index'])
-        ->name('recipes.index');
 
     Route::post('/master-data/recipes', [RecipeController::class, 'store'])
         ->name('recipes.store');

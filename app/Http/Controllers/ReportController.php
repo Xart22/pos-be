@@ -40,7 +40,7 @@ class ReportController extends Controller
         $cashOut = $cashOut->groupBy('tanggal')->map(function ($item, $key) {
             return [
                 'tanggal' => $key,
-                'description' => $item->pluck('description')->join('\n '),
+                'description' => $item->pluck('description')->join('<br>'),
                 'amount' => $item->sum('amount'),
             ];
         })->values();
@@ -52,7 +52,7 @@ class ReportController extends Controller
                 $q->whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])->where('shift', 'Full Time');
             }])
             ->with(['cashbon' => function ($q) use ($startOfPeriod, $endOfPeriod) {
-                $q->whereBetween('tanggal', [$startOfPeriod, $endOfPeriod]);
+                $q->whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])->where('status', 'Disetujui');
             }])
             ->get();
 

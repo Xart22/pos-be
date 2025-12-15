@@ -110,7 +110,13 @@ export const cashOutColumns: ColumnDef<CashOut>[] = [
         id: 'description',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Deskripsi" />,
         //long text wrap if include \n character
-        cell: ({ getValue }) => <pre className="font-sans whitespace-pre-line">{getValue() as string}</pre>,
+        cell: ({ getValue }) => {
+            const desc = getValue() as string;
+
+            const formattedDesc = desc.replace(/\n/g, '<br />');
+
+            return <span dangerouslySetInnerHTML={{ __html: formattedDesc }}></span>;
+        },
         enableSorting: true,
     },
     {
@@ -172,5 +178,24 @@ export const rekapKaryawanColumns: ColumnDef<EmployeeReport>[] = [
             return <span>{formatRupiah(total_gaji)}</span>;
         },
         enableSorting: true,
+    },
+    {
+        accessorKey: 'total_cashbon',
+        id: 'total_cashbon',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Total Cashbon" />,
+        cell: ({ getValue }) => {
+            const total_cashbon = getValue() as number;
+            return <span>{formatRupiah(total_cashbon)}</span>;
+        },
+        enableSorting: true,
+    },
+    {
+        accessorKey: 'gaji_bersih',
+        id: 'gaji_bersih',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Gaji Setelah Cashbon" />,
+        cell: ({ getValue }) => {
+            const gaji_bersih = getValue() as number;
+            return <span>{formatRupiah(gaji_bersih)}</span>;
+        },
     },
 ];

@@ -53,7 +53,6 @@ export default function ReportPage({
                         Periode: <span className="font-semibold">{period}</span>
                     </p>
                 </div>
-
                 {/* CONTOH SUMMARY KECIL DI ATAS (OPSIONAL) */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div className="rounded-xl border bg-card p-4">
@@ -67,7 +66,7 @@ export default function ReportPage({
                     <div className="rounded-xl border bg-card p-4">
                         <p className="text-xs text-muted-foreground">Total Operasional</p>
                         <p className="text-lg font-semibold">
-                            {formatRupiah(Number(sum_operational + data_karyawan.reduce((sum, record) => sum + record.total_gaji, 0)))}
+                            {formatRupiah(Number(sum_operational + data_karyawan.reduce((sum, record) => sum + record.gaji_bersih, 0)))}
                         </p>
                     </div>
                     <div className="rounded-xl border bg-card p-4">
@@ -75,159 +74,145 @@ export default function ReportPage({
                         <p className="text-lg font-semibold">
                             {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.omset, 0))} -{' '}
                             {formatRupiah(cash_out.reduce((sum, record) => sum + Number(record.amount), 0))} + {formatRupiah(Number(sum_operational))}{' '}
-                            + {formatRupiah(data_karyawan.reduce((sum, record) => sum + record.total_gaji, 0))} ={' '}
+                            + {formatRupiah(data_karyawan.reduce((sum, record) => sum + record.gaji_bersih, 0))} ={' '}
                             {formatRupiah(
                                 data_omset_daily.reduce((sum, record) => sum + record.omset, 0) -
                                     cash_out.reduce((sum, record) => sum + Number(record.amount), 0) -
                                     Number(sum_operational) -
-                                    data_karyawan.reduce((sum, record) => sum + record.total_gaji, 0),
+                                    data_karyawan.reduce((sum, record) => sum + record.gaji_bersih, 0),
                             )}
                         </p>
                     </div>
                 </div>
-
                 {/* SECTION: LAPORAN OMSET HARIAN & Cash Out */}
-                <div className="flex flex-col gap-4 md:flex-row md:gap-6">
-                    <div className="rounded-xl border bg-card">
-                        <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
-                            <div>
-                                <h2 className="text-lg font-semibold">Laporan Omset Harian</h2>
-                                <p className="text-xs text-muted-foreground">
-                                    Rekap omset harian berdasarkan transaksi yang terjadi selama periode ini.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
-                            <DataTable columns={omsetColumns} data={data_omset_daily} enableSearching={true} />
-                            {/* Total Omset */}
-                            <div className="mt-4 flex flex-row justify-end gap-6">
-                                <span className="text-sm font-semibold">
-                                    Total Omset: {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.omset, 0))}
-                                </span>
-                                <span className="text-sm font-semibold">
-                                    Total Qris: {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.qris, 0))}
-                                </span>
-                                <span className="text-sm font-semibold">
-                                    Total Cash: {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.cash, 0))}
-                                </span>
-                            </div>
+                <div className="rounded-xl border bg-card">
+                    <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
+                        <div>
+                            <h2 className="text-lg font-semibold">Laporan Omset Harian</h2>
+                            <p className="text-xs text-muted-foreground">Rekap omset harian berdasarkan transaksi yang terjadi selama periode ini.</p>
                         </div>
                     </div>
-                    <div className="rounded-xl border bg-card">
-                        <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
-                            <div>
-                                <h2 className="text-lg font-semibold">Rekap Gaji Karyawan</h2>
-                                <p className="text-xs text-muted-foreground">
-                                    Rekap total gaji karyawan beserta potongan cashbon selama periode ini.
-                                </p>
-                            </div>
-                        </div>
 
-                        <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
-                            <DataTable columns={rekapKaryawanColumns} data={data_karyawan} enableSearching={true} />
-
-                            <div className="mt-4 flex justify-end">
-                                <span className="text-sm font-semibold">
-                                    Total Gaji: {formatRupiah(data_karyawan.reduce((sum, record) => sum + record.total_gaji, 0))}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="rounded-xl border bg-card">
-                        <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
-                            <div>
-                                <h2 className="text-lg font-semibold">Rekap Penjualan Best Seller</h2>
-                                <p className="text-xs text-muted-foreground">Rekap penjualan menu makanan dan minuman terlaris selama periode ini.</p>
-                            </div>
-                        </div>
-
-                        <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
-                            <DataTable
-                                columns={[
-                                    {
-                                        id: 'menu_name',
-                                        accessorFn: (row) => row.menu ?? row.name ?? '',
-                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Menu" />,
-                                        cell: ({ getValue }) => <span className="font-medium">{getValue() as string}</span>,
-                                        enableSorting: true,
-                                    },
-                                    {
-                                        accessorKey: 'quantity',
-                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Quantity" />,
-                                        enableSorting: true,
-                                    },
-                                    {
-                                        accessorKey: 'base_price',
-                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Base Price" />,
-                                        cell: ({ getValue }) => formatRupiah(getValue<number>()),
-                                        enableSorting: true,
-                                    },
-                                    {
-                                        accessorKey: 'variant_price',
-                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Variant Price" />,
-                                        cell: ({ getValue }) => formatRupiah(getValue<number>()),
-                                        enableSorting: true,
-                                    },
-                                    {
-                                        accessorKey: 'total_price',
-                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Total Price" />,
-                                        cell: ({ getValue }) => formatRupiah(getValue<number>()),
-                                        enableSorting: true,
-                                    },
-                                ]}
-                                data={[...transactions_food, ...transactions_drink]}
-                                enableSearching
-                            />
+                    <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
+                        <DataTable columns={omsetColumns} data={data_omset_daily} enableSearching={true} />
+                        {/* Total Omset */}
+                        <div className="mt-4 flex flex-row justify-end gap-6">
+                            <span className="text-sm font-semibold">
+                                Total Omset: {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.omset, 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total Qris: {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.qris, 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total Cash: {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.cash, 0))}
+                            </span>
                         </div>
                     </div>
                 </div>
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                    <div className="rounded-xl border bg-card">
-                        <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
-                            <div>
-                                <h2 className="text-lg font-semibold">Laporan Cash Out</h2>
-                                <p className="text-xs text-muted-foreground">Rekap pengeluaran kas (cash out) selama periode ini.</p>
-                            </div>
-                        </div>
-
-                        <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
-                            <DataTable columns={cashOutColumns} data={cash_out} enableSearching={true} />
-                            {/* Total Omset */}
-                            <div className="mt-4 flex justify-end">
-                                <span className="text-sm font-semibold">
-                                    Total Cashout: {formatRupiah(cash_out.reduce((sum, record) => sum + record.amount, 0))}
-                                </span>
-                            </div>
+                <div className="rounded-xl border bg-card">
+                    <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
+                        <div>
+                            <h2 className="text-lg font-semibold">Rekap Penjualan Best Seller</h2>
+                            <p className="text-xs text-muted-foreground">Rekap penjualan menu makanan dan minuman terlaris selama periode ini.</p>
                         </div>
                     </div>
-                    {/* SECTION: PEMAKAIAN BAHAN BAKU */}
-                    <div className="rounded-xl border bg-card">
-                        <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
-                            <div>
-                                <h2 className="text-lg font-semibold">Pemakaian Bahan Baku</h2>
-                                <p className="text-xs text-muted-foreground">
-                                    Rekap total penggunaan bahan baku berdasarkan penjualan selama periode ini.
-                                </p>
-                            </div>
-                        </div>
 
-                        <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
-                            <DataTable columns={ingredientColumns} data={sum_ingredients} enableSearching={true} />
-                            {/* Total Pemakaian Bahan Baku */}
-                            <div className="mt-4 flex justify-end">
-                                <span className="text-sm font-semibold">
-                                    Total Cost: {formatRupiah(sum_ingredients.reduce((sum, item) => sum + (Number(item.cost) || 0), 0))}
-                                </span>
-                            </div>
+                    <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
+                        <DataTable
+                            columns={[
+                                {
+                                    id: 'menu_name',
+                                    accessorFn: (row) => row.menu ?? row.name ?? '',
+                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Menu" />,
+                                    cell: ({ getValue }) => <span className="font-medium">{getValue() as string}</span>,
+                                    enableSorting: true,
+                                },
+                                {
+                                    accessorKey: 'quantity',
+                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Quantity" />,
+                                    enableSorting: true,
+                                },
+                                {
+                                    accessorKey: 'base_price',
+                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Base Price" />,
+                                    cell: ({ getValue }) => formatRupiah(getValue<number>()),
+                                    enableSorting: true,
+                                },
+                                {
+                                    accessorKey: 'variant_price',
+                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Variant Price" />,
+                                    cell: ({ getValue }) => formatRupiah(getValue<number>()),
+                                    enableSorting: true,
+                                },
+                                {
+                                    accessorKey: 'total_price',
+                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Total Price" />,
+                                    cell: ({ getValue }) => formatRupiah(getValue<number>()),
+                                    enableSorting: true,
+                                },
+                            ]}
+                            data={[...transactions_food, ...transactions_drink]}
+                            enableSearching
+                        />
+                    </div>
+                </div>
+                <div className="rounded-xl border bg-card">
+                    <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
+                        <div>
+                            <h2 className="text-lg font-semibold">Rekap Gaji Karyawan</h2>
+                            <p className="text-xs text-muted-foreground">Rekap total gaji karyawan beserta potongan cashbon selama periode ini.</p>
+                        </div>
+                    </div>
+
+                    <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
+                        <DataTable columns={rekapKaryawanColumns} data={data_karyawan} enableSearching={true} />
+
+                        <div className="mt-4 flex justify-end">
+                            <span className="text-sm font-semibold">
+                                Total Gaji: {formatRupiah(data_karyawan.reduce((sum, record) => sum + record.gaji_bersih, 0))}
+                            </span>
                         </div>
                     </div>
                 </div>
-                {/* SECTION LAIN (FOOD / DRINK / GAJI / DLL) BISA DITAMBAH DI SINI */}
-                {/* Contoh placeholder: */}
-                {/* <YourFoodTableComponent data={transactions_food} /> */}
-                {/* <YourDrinkTableComponent data={transactions_drink} /> */}
-                {/* <YourStaffCostComponent data={data_karyawan} /> */}
+                {/* SECTION: PEMAKAIAN BAHAN BAKU */}
+                <div className="rounded-xl border bg-card">
+                    <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
+                        <div>
+                            <h2 className="text-lg font-semibold">Pemakaian Bahan Baku</h2>
+                            <p className="text-xs text-muted-foreground">
+                                Rekap total penggunaan bahan baku berdasarkan penjualan selama periode ini.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
+                        <DataTable columns={ingredientColumns} data={sum_ingredients} enableSearching={true} />
+                        {/* Total Pemakaian Bahan Baku */}
+                        <div className="mt-4 flex justify-end">
+                            <span className="text-sm font-semibold">
+                                Total Cost: {formatRupiah(sum_ingredients.reduce((sum, item) => sum + (Number(item.cost) || 0), 0))}
+                            </span>
+                        </div>
+                    </div>
+                </div>{' '}
+                <div className="rounded-xl border bg-card">
+                    <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
+                        <div>
+                            <h2 className="text-lg font-semibold">Laporan Cash Out</h2>
+                            <p className="text-xs text-muted-foreground">Rekap pengeluaran kas (cash out) selama periode ini.</p>
+                        </div>
+                    </div>
+
+                    <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
+                        <DataTable columns={cashOutColumns} data={cash_out} enableSearching={true} />
+                        {/* Total Omset */}
+                        <div className="mt-4 flex justify-end">
+                            <span className="text-sm font-semibold">
+                                Total Cashout: {formatRupiah(cash_out.reduce((sum, record) => sum + record.amount, 0))}
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </AppLayout>
     );

@@ -230,4 +230,5 @@ export type EmployeeReport = {
     cashbon: CashBon[];
     total_cashbon: number;
     full_time: number;
+    gaji_bersih: number;
 };

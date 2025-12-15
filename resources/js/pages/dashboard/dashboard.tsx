@@ -1,6 +1,5 @@
 import LineBarChart from '@/components/chart/line-bar-chart';
 import { DataTable } from '@/components/data-table';
-import PeriodPicker from '@/components/date-range';
 import { Card } from '@/components/ui/card';
 import formatRupiah from '@/helper/formatRupiah';
 import AppLayout from '@/layouts/app-layout';
@@ -65,8 +64,6 @@ export default function Dashboard({
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
-
-            <PeriodPicker />
             <div className="flex flex-col gap-2 p-4 md:p-6 lg:p-8">
                 <h1 className="text-center text-2xl font-bold text-muted-foreground">Omset</h1>
 
