@@ -76,6 +76,7 @@ class ReportController extends Controller
 
 
         $usedIngredients = $this->generateReport($startOfPeriod, $endOfPeriod);
+        $redemIngredients = $this->generateReport($startOfPeriod, $endOfPeriod, true);
         $omset = DB::table('transactions')
             ->selectRaw('DATE(created_at) as date')
             ->selectRaw('SUM(total_price) as omset')
@@ -114,11 +115,12 @@ class ReportController extends Controller
             'transactions_drink' => $usedIngredients['transactions_drink'],
             'period' => $startOfPeriod->format('Y-m'),
             'data_omset_daily'  => $dataOmsetDaily,
+            'redem_ingredients' => $redemIngredients['sum_ingredients'],
         ]);
     }
 
 
-    private function generateReport($startOfPeriod, $endOfPeriod)
+    private function generateReport($startOfPeriod, $endOfPeriod, $isRedem = false): array
     {
         $foodCategory  = [2, 3, 4, 5, 6, 7, 8, 9, 18];
         $drinkCategory = [1, 10, 11, 12, 14, 16, 17];
@@ -131,17 +133,17 @@ class ReportController extends Controller
         $transUnknown   = [];
         $sumIngredients = [];
 
+        $operator = $isRedem ? '=' : '>';
 
-        // ==========================
-        // 2. PROSES TRANSAKSI PAKAI CHUNK (HEMAT RAM)
-        // ==========================
-        Transaction::with([
-            'details.menu.category',
-            'details.menu.recipes.bahanBakus.bahanBaku',
-            'details.variants.variantOption.variant',
-        ])
+        Transaction::query()
+            ->with([
+                'details.menu.category',
+                'details.menu.recipes.bahanBakus.bahanBaku',
+                'details.variants.variantOption.variant',
+            ])
             ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
-            ->orderBy('id') // wajib untuk chunkById
+            ->where('total_price', $operator, 0)
+            ->orderBy('id')
             ->chunkById(300, function ($transactions) use (
                 &$transFood,
                 &$transDrink,
@@ -152,23 +154,19 @@ class ReportController extends Controller
                 foreach ($transactions as $transaction) {
                     foreach ($transaction->details as $detail) {
                         $menu = $detail->menu;
-
-                        if (!$menu) {
-                            continue;
-                        }
+                        if (!$menu) continue;
 
                         $categoryId = $menu->category->id ?? null;
 
-                        // Hitung sekali
                         $quantity  = (int) $detail->quantity;
+                        if ($quantity <= 0) continue;
+
                         $basePrice = (float) ($menu->price ?? 0);
 
-                        // Total harga varian per item
-                        $variantPricePerItem = $detail->variants->sum(function ($variant) {
+                        $variantPricePerItem = (float) $detail->variants->sum(function ($variant) {
                             return (float) ($variant->variantOption->price ?? 0);
                         });
 
-                        // Susun info variant
                         $variantItems = $detail->variants->map(function ($variant) {
                             return [
                                 'variant_name' => $variant->variantOption->variant->name ?? null,
@@ -177,7 +175,6 @@ class ReportController extends Controller
                             ];
                         });
 
-                        // Nama varian utk pembeda minuman
                         $variantNames = $detail->variants
                             ->pluck('variantOption.name')
                             ->filter()
@@ -191,115 +188,111 @@ class ReportController extends Controller
                             : $baseKey;
 
                         // ==========================
-                        // PILIH RECIPE TANPA QUERY DB
+                        // PILIH RECIPE (tanpa query DB)
                         // ==========================
-                        $recipe = $menu->recipes->first(); // default recipe
-
+                        $recipe = $menu->recipes->first(); // default
                         $lowerDrinkKey = strtolower($drinkKey);
 
                         if (str_contains($lowerDrinkKey, 'large')) {
                             $drinkKey = $baseKey . ' - L';
 
-                            // cari resep yang punya variant_options_id (sudah di-eager load)
-                            $recipe = $menu->recipes
-                                ->firstWhere('variant_options_id', '!=', null);
-                        } elseif (str_contains($lowerDrinkKey, 'reguler')) {
+                            // resep varian: variant_options_id != null
+                            $recipe = $menu->recipes->firstWhere('variant_options_id', '!=', null) ?? $recipe;
+                        } elseif (str_contains($lowerDrinkKey, 'reguler') || str_contains($lowerDrinkKey, 'regular')) {
                             $drinkKey = $baseKey . ' - R';
-
-                            // resep reguler: resep pertama
-                            $recipe = $menu->recipes->first();
+                            $recipe = $menu->recipes->first() ?? $recipe;
                         }
 
                         // ==========================
-                        // HITUNG PEMAKAIAN BAHAN BAKU
+                        // HITUNG PEMAKAIAN BAHAN + COST (lebih aman)
                         // ==========================
-                        $usedIngredients = collect();
+                        $usedIngredients = [];
+
                         if ($recipe && $recipe->bahanBakus) {
-                            $usedIngredients = $recipe->bahanBakus->map(function ($bahanResep) use ($quantity) {
-                                return [
-                                    'bahan_baku_id' => $bahanResep->bahan_baku_id,
-                                    'name'          => $bahanResep->bahanBaku->name ?? null,
+                            foreach ($recipe->bahanBakus as $bahanResep) {
+                                $bb = $bahanResep->bahanBaku;
+
+                                $bahanId = (int) ($bahanResep->bahan_baku_id ?? 0);
+                                if ($bahanId <= 0) continue;
+
+                                $qtyUsed = (float) $bahanResep->jumlah * $quantity;
+
+                                $harga   = (float) ($bb->harga ?? 0);
+                                $perUnit = (float) ($bb->per_unit ?? 0);
+                                if ($perUnit <= 0) $perUnit = 1; // ✅ anti div 0
+
+                                $cost = ($harga / $perUnit) * $qtyUsed;
+
+                                $usedIngredients[] = [
+                                    'bahan_baku_id' => $bahanId,
+                                    'name'          => $bb->name ?? null,
                                     'unit'          => $bahanResep->satuan,
-                                    'quantity'      => (float) $bahanResep->jumlah * $quantity,
-                                    'cost'          => (float) $bahanResep->bahanBaku->harga / $bahanResep->bahanBaku->per_unit * ((float) $bahanResep->jumlah * $quantity),
+                                    'quantity'      => $qtyUsed,
+                                    'cost'          => (float) $cost,
                                 ];
-                            });
+                            }
                         }
 
                         // ==========================
                         // NORMALIZED ROW
                         // ==========================
                         $row = [
-                            'name'             => $baseKey,
-                            'category'         => $categoryId,
-                            'quantity'         => $quantity,
-                            'base_price'       => $basePrice,
-                            'variant_price'    => $variantPricePerItem,
-                            'total_price'      => ($basePrice + $variantPricePerItem) * $quantity,
-                            'variants'         => $variantItems,
-                            'recipe'           => $recipe ? $recipe->bahanBakus : collect(),
+                            'name'          => $baseKey,
+                            'category'      => $categoryId,
+                            'quantity'      => $quantity,
+                            'base_price'    => $basePrice,
+                            'variant_price' => $variantPricePerItem,
+                            'total_price'   => ($basePrice + $variantPricePerItem) * $quantity,
+                            'variants'      => $variantItems,
                             'used_ingredients' => $usedIngredients,
                         ];
 
                         // ==========================
-                        // MASUKKAN KE BUCKET
+                        // BUCKET + MERGE CEPAT (tanpa merge/groupBy collection berulang)
                         // ==========================
-
                         if (isset($foodSet[$categoryId])) {
-                            // FOOD: gabung per nama menu
                             $key = $baseKey;
 
                             if (!isset($transFood[$key])) {
                                 $transFood[$key] = $row;
+                                $transFood[$key]['_ing_map'] = []; // internal map
                             } else {
-                                $transFood[$key]['quantity']    += $row['quantity'];
+                                $transFood[$key]['quantity'] += $quantity;
                                 $transFood[$key]['total_price'] += $row['total_price'];
+                            }
 
-                                $transFood[$key]['used_ingredients'] = $transFood[$key]['used_ingredients']
-                                    ->merge($row['used_ingredients'])
-                                    ->groupBy('bahan_baku_id')
-                                    ->map(function ($items) {
-                                        $first = $items->first();
-
-                                        return [
-                                            'bahan_baku_id' => $first['bahan_baku_id'],
-                                            'name'          => $first['name'],
-                                            'unit'          => $first['unit'],
-                                            'quantity'      => $items->sum('quantity'),
-                                            'cost'          => $items->sum('cost'),
-                                        ];
-                                    })
-                                    ->values();
+                            // accumulate ingredients
+                            foreach ($usedIngredients as $ing) {
+                                $id = $ing['bahan_baku_id'];
+                                if (!isset($transFood[$key]['_ing_map'][$id])) {
+                                    $transFood[$key]['_ing_map'][$id] = $ing;
+                                } else {
+                                    $transFood[$key]['_ing_map'][$id]['quantity'] += $ing['quantity'];
+                                    $transFood[$key]['_ing_map'][$id]['cost'] += $ing['cost'];
+                                }
                             }
                         } elseif (isset($drinkSet[$categoryId])) {
-                            // DRINK: gabung per menu + varian
-                            $key        = $drinkKey;
+                            $key = $drinkKey;
                             $row['menu'] = $key;
 
                             if (!isset($transDrink[$key])) {
                                 $transDrink[$key] = $row;
+                                $transDrink[$key]['_ing_map'] = [];
                             } else {
-                                $transDrink[$key]['quantity']    += $row['quantity'];
+                                $transDrink[$key]['quantity'] += $quantity;
                                 $transDrink[$key]['total_price'] += $row['total_price'];
+                            }
 
-                                $transDrink[$key]['used_ingredients'] = $transDrink[$key]['used_ingredients']
-                                    ->merge($row['used_ingredients'])
-                                    ->groupBy('bahan_baku_id')
-                                    ->map(function ($items) {
-                                        $first = $items->first();
-
-                                        return [
-                                            'bahan_baku_id' => $first['bahan_baku_id'],
-                                            'name'          => $first['name'],
-                                            'unit'          => $first['unit'],
-                                            'quantity'      => $items->sum('quantity'),
-                                            'cost'          => $items->sum('cost'),
-                                        ];
-                                    })
-                                    ->values();
+                            foreach ($usedIngredients as $ing) {
+                                $id = $ing['bahan_baku_id'];
+                                if (!isset($transDrink[$key]['_ing_map'][$id])) {
+                                    $transDrink[$key]['_ing_map'][$id] = $ing;
+                                } else {
+                                    $transDrink[$key]['_ing_map'][$id]['quantity'] += $ing['quantity'];
+                                    $transDrink[$key]['_ing_map'][$id]['cost'] += $ing['cost'];
+                                }
                             }
                         } else {
-                            // UNKNOWN CATEGORY
                             $transUnknown[] = $row;
                         }
                     }
@@ -307,16 +300,25 @@ class ReportController extends Controller
             });
 
         // ==========================
-        // SUM BAHAN BAKU KESELURUHAN (FOOD + DRINK)
+        // FINALIZE: convert _ing_map -> used_ingredients
+        // ==========================
+        foreach ($transFood as $k => $row) {
+            $transFood[$k]['used_ingredients'] = array_values($row['_ing_map'] ?? []);
+            unset($transFood[$k]['_ing_map']);
+        }
+        foreach ($transDrink as $k => $row) {
+            $transDrink[$k]['used_ingredients'] = array_values($row['_ing_map'] ?? []);
+            unset($transDrink[$k]['_ing_map']);
+        }
+
+        // ==========================
+        // SUM BAHAN BAKU KESELURUHAN
         // ==========================
         $allItems = array_merge(array_values($transFood), array_values($transDrink));
 
-
         foreach ($allItems as $item) {
             foreach ($item['used_ingredients'] as $ingredient) {
-
                 $id = $ingredient['bahan_baku_id'];
-
 
                 if (!isset($sumIngredients[$id])) {
                     $sumIngredients[$id] = [
@@ -327,17 +329,20 @@ class ReportController extends Controller
                         'cost'          => 0,
                     ];
                 }
-                $sumIngredients[$id]['quantity'] += $ingredient['quantity'];
-                $sumIngredients[$id]['cost'] += $ingredient['cost'];
+
+                $sumIngredients[$id]['quantity'] += (float) $ingredient['quantity'];
+                $sumIngredients[$id]['cost'] += (float) $ingredient['cost'];
             }
         }
 
         return [
-            'transactions_food'    => array_values($transFood),
-            'transactions_drink'   => array_values($transDrink),
-            'sum_ingredients'      => array_values($sumIngredients),
+            'transactions_food'  => array_values($transFood),
+            'transactions_drink' => array_values($transDrink),
+            'transactions_unknown' => array_values($transUnknown),
+            'sum_ingredients'    => array_values($sumIngredients),
         ];
     }
+
 
     /**
      * Show the form for creating a new resource.

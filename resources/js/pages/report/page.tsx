@@ -17,6 +17,7 @@ type ReportProps = {
     transactions_drink: StockRow[];
     transactions_unknown: StockRow[];
     sum_ingredients: IngredientSummary[];
+    redem_ingredients: IngredientSummary[];
     period: string;
     data_omset_daily: { date: string; omset: number; qris: number; cash: number; opening_balance: number; total_cash: number }[];
 };
@@ -37,10 +38,10 @@ export default function ReportPage({
     transactions_drink,
     transactions_unknown,
     sum_ingredients,
+    redem_ingredients,
     period,
     data_omset_daily,
 }: ReportProps) {
-    console.log({ cash_out });
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Report" />
@@ -154,6 +155,12 @@ export default function ReportPage({
                             data={[...transactions_food, ...transactions_drink]}
                             enableSearching
                         />
+                        <div className="mt-4 flex justify-end">
+                            <span className="text-sm font-semibold">
+                                Total Penjualan:
+                                {formatRupiah([...transactions_food, ...transactions_drink].reduce((sum, record) => sum + record.total_price, 0))}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <div className="rounded-xl border bg-card">
@@ -184,17 +191,28 @@ export default function ReportPage({
                             </p>
                         </div>
                     </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
+                            <span className="mb-2 block font-semibold">Total Penjualan Bahan Baku</span>
+                            <DataTable columns={ingredientColumns} data={sum_ingredients} enableSearching={true} />
 
-                    <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
-                        <DataTable columns={ingredientColumns} data={sum_ingredients} enableSearching={true} />
-                        {/* Total Pemakaian Bahan Baku */}
-                        <div className="mt-4 flex justify-end">
-                            <span className="text-sm font-semibold">
-                                Total Cost: {formatRupiah(sum_ingredients.reduce((sum, item) => sum + (Number(item.cost) || 0), 0))}
-                            </span>
+                            <div className="mt-4 flex justify-end">
+                                <span className="text-sm font-semibold">
+                                    Total Cost: {formatRupiah(sum_ingredients.reduce((sum, item) => sum + (Number(item.cost) || 0), 0))}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
+                            <span className="mb-2 block font-semibold">Total Redem Bahan Baku</span>
+                            <DataTable columns={ingredientColumns} data={redem_ingredients} enableSearching={true} />
+                            <div className="mt-4 flex justify-end">
+                                <span className="text-sm font-semibold">
+                                    Total Cost: {formatRupiah(redem_ingredients.reduce((sum, item) => sum + (Number(item.cost) || 0), 0))}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>{' '}
+                </div>
                 <div className="rounded-xl border bg-card">
                     <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
                         <div>
