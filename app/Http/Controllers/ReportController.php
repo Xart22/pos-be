@@ -91,19 +91,29 @@ class ReportController extends Controller
             ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
             ->groupByRaw('DATE(created_at)');
 
+        $splitOmset = $this->splitOmset($startOfPeriod, $endOfPeriod);
+
         $dataOmsetDaily = DB::query()
             ->fromSub($omset, 'o')
             ->leftJoinSub($drawer, 'd', 'o.date', '=', 'd.date')
             ->orderBy('o.date')
             ->get()
-            ->map(fn($r) => [
-                'date'          => $r->date,
-                'omset'         => (float) $r->omset,
-                'qris'          => (float) $r->qris,
-                'opening_balance'  => (float) ($r->opening_balance ?? 0),
-                'cash'          => (float) $r->cash,
-                'total_cash'   => (float) $r->cash + (float) ($r->opening_balance ?? 0),
-            ]);
+            ->map(function ($r) use ($splitOmset) {
+                $split = $splitOmset->get($r->date); // ini array atau null
+
+                return [
+                    'date'            => $r->date,
+                    'omset'           => (float) $r->omset,
+                    'qris'            => (float) $r->qris,
+                    'opening_balance' => (float) ($r->opening_balance ?? 0),
+                    'cash'            => (float) $r->cash,
+                    'total_cash'      => (float) $r->cash + (float) ($r->opening_balance ?? 0),
+                    'bar'             => (float) ($split['bar'] ?? 0),
+                    'kitchen'         => (float) ($split['kitchen'] ?? 0),
+                    'unknown'         => (float) ($split['unknown'] ?? 0),
+                ];
+            });
+
 
         return Inertia::render('report/page', [
             'operational'       => $operational,
@@ -118,6 +128,73 @@ class ReportController extends Controller
             'redem_ingredients' => $redemIngredients['sum_ingredients'],
         ]);
     }
+
+    private function splitOmset($startOfPeriod, $endOfPeriod)
+    {
+        $foodCategory  = [2, 3, 4, 5, 6, 7, 8, 9, 18];
+        $drinkCategory = [1, 10, 11, 12, 14, 16, 17];
+
+        $foodSet  = array_flip($foodCategory);
+        $drinkSet = array_flip($drinkCategory);
+
+        $splitOmset = []; // ['2025-12-01' => ['bar'=>..., 'kitchen'=>... ]]
+
+        Transaction::query()
+            ->with([
+                'details.menu.category',
+                'details.variants.variantOption', // buat ambil price varian
+            ])
+            ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
+            ->where('total_price', '!=', 0)
+            ->orderBy('id')
+            ->chunkById(300, function ($transactions) use (&$splitOmset, $foodSet, $drinkSet) {
+                foreach ($transactions as $trx) {
+                    $date = $trx->created_at->format('Y-m-d');
+
+                    if (!isset($splitOmset[$date])) {
+                        $splitOmset[$date] = ['bar' => 0.0, 'kitchen' => 0.0, 'unknown' => 0.0];
+                    }
+
+                    foreach ($trx->details as $detail) {
+                        $menu = $detail->menu;
+                        if (!$menu) continue;
+
+                        $categoryId = $menu->category->id ?? null;
+                        $qty = (int) ($detail->quantity ?? 0);
+                        if ($qty <= 0) continue;
+
+                        $base = (float) ($menu->price ?? 0);
+
+                        // variant price per item (sesuai transaksi)
+                        $variantPerItem = (float) $detail->variants->sum(function ($v) {
+                            return (float) ($v->variantOption->price ?? 0);
+                        });
+
+                        // total detail = (base + variant) * qty
+                        $detailTotal = ($base + $variantPerItem) * $qty;
+
+                        if (isset($drinkSet[$categoryId])) {
+                            $splitOmset[$date]['bar'] += $detailTotal;
+                        } elseif (isset($foodSet[$categoryId])) {
+                            $splitOmset[$date]['kitchen'] += $detailTotal;
+                        } else {
+                            $splitOmset[$date]['unknown'] += $detailTotal;
+                        }
+                    }
+                }
+            });
+
+        // kalau mau format seperti map sebelumnya:
+        $splitOmset = collect($splitOmset)->map(function ($v) {
+            return [
+                'bar' => (float) $v['bar'],
+                'kitchen' => (float) $v['kitchen'],
+                'unknown' => (float) $v['unknown'],
+            ];
+        });
+        return $splitOmset;
+    }
+
 
 
     private function generateReport($startOfPeriod, $endOfPeriod, $isRedem = false): array

@@ -53,6 +53,7 @@ class CashOutController extends Controller
                 'amount' => $request->total,
                 'description' => trim($desc),
                 'tanggal' => $request->tanggal,
+                'kategori' => $request->kategori,
             ]);
 
             DB::commit();

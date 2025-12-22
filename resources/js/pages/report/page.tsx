@@ -19,7 +19,16 @@ type ReportProps = {
     sum_ingredients: IngredientSummary[];
     redem_ingredients: IngredientSummary[];
     period: string;
-    data_omset_daily: { date: string; omset: number; qris: number; cash: number; opening_balance: number; total_cash: number }[];
+    data_omset_daily: {
+        date: string;
+        omset: number;
+        qris: number;
+        cash: number;
+        opening_balance: number;
+        total_cash: number;
+        bar: number;
+        kitchen: number;
+    }[];
 };
 
 const breadcrumbs: BreadcrumbItem[] = [

@@ -55,6 +55,26 @@ export const omsetColumns: ColumnDef<{ date: string; omset: number; qris: number
         enableSorting: true,
     },
     {
+        accessorKey: 'bar',
+        id: 'bar',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Bar" />,
+        cell: ({ getValue }) => {
+            const bar = getValue() as number;
+            return <span>{formatRupiah(bar)}</span>;
+        },
+        enableSorting: true,
+    },
+    {
+        accessorKey: 'kitchen',
+        id: 'kitchen',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Kitchen" />,
+        cell: ({ getValue }) => {
+            const kitchen = getValue() as number;
+            return <span>{formatRupiah(kitchen)}</span>;
+        },
+        enableSorting: true,
+    },
+    {
         accessorKey: 'qris',
         id: 'qris',
         header: ({ column }) => <DataTableColumnHeader column={column} title="QRIS" />,
