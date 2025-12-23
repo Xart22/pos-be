@@ -177,7 +177,7 @@ export default function ReportPage({
                                     Total est profit:
                                     {formatRupiah(
                                         transactions_drink.reduce((sum, record) => sum + record.total_price, 0) -
-                                            transactions_drink.reduce((sum, record) => sum + record.total_price, 0) * 0.35,
+                                            transactions_drink.reduce((sum, record) => sum + record.total_price, 0) * 0.4,
                                     )}
                                 </span>
                             </div>
