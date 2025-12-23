@@ -126,49 +126,116 @@ export default function ReportPage({
                             <p className="text-xs text-muted-foreground">Rekap penjualan menu makanan dan minuman terlaris selama periode ini.</p>
                         </div>
                     </div>
-
-                    <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
-                        <DataTable
-                            columns={[
-                                {
-                                    id: 'menu_name',
-                                    accessorFn: (row) => row.menu ?? row.name ?? '',
-                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Menu" />,
-                                    cell: ({ getValue }) => <span className="font-medium">{getValue() as string}</span>,
-                                    enableSorting: true,
-                                },
-                                {
-                                    accessorKey: 'quantity',
-                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Quantity" />,
-                                    enableSorting: true,
-                                },
-                                {
-                                    accessorKey: 'base_price',
-                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Base Price" />,
-                                    cell: ({ getValue }) => formatRupiah(getValue<number>()),
-                                    enableSorting: true,
-                                },
-                                {
-                                    accessorKey: 'variant_price',
-                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Variant Price" />,
-                                    cell: ({ getValue }) => formatRupiah(getValue<number>()),
-                                    enableSorting: true,
-                                },
-                                {
-                                    accessorKey: 'total_price',
-                                    header: ({ column }) => <DataTableColumnHeader column={column} title="Total Price" />,
-                                    cell: ({ getValue }) => formatRupiah(getValue<number>()),
-                                    enableSorting: true,
-                                },
-                            ]}
-                            data={[...transactions_food, ...transactions_drink]}
-                            enableSearching
-                        />
-                        <div className="mt-4 flex justify-end">
-                            <span className="text-sm font-semibold">
-                                Total Penjualan:
-                                {formatRupiah([...transactions_food, ...transactions_drink].reduce((sum, record) => sum + record.total_price, 0))}
-                            </span>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
+                            <DataTable
+                                columns={[
+                                    {
+                                        id: 'menu_name',
+                                        accessorFn: (row) => row.menu ?? row.name ?? '',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Menu" />,
+                                        cell: ({ getValue }) => <span className="font-medium">{getValue() as string}</span>,
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'quantity',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Quantity" />,
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'base_price',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Base Price" />,
+                                        cell: ({ getValue }) => formatRupiah(getValue<number>()),
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'variant_price',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Variant Price" />,
+                                        cell: ({ getValue }) => formatRupiah(getValue<number>()),
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'total_price',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Total Price" />,
+                                        cell: ({ getValue }) => formatRupiah(getValue<number>()),
+                                        enableSorting: true,
+                                    },
+                                ]}
+                                data={transactions_drink}
+                                enableSearching
+                            />
+                            <div className="mt-4 flex flex-row justify-end gap-6">
+                                <span className="text-sm font-semibold">
+                                    Total Penjualan:
+                                    {formatRupiah(transactions_drink.reduce((sum, record) => sum + record.total_price, 0))}
+                                </span>
+                                <span className="text-sm font-semibold">
+                                    Total est cost:
+                                    {formatRupiah(transactions_drink.reduce((sum, record) => sum + record.total_price, 0) * 0.4)}
+                                </span>
+                                <span className="text-sm font-semibold">
+                                    Total est profit:
+                                    {formatRupiah(
+                                        transactions_drink.reduce((sum, record) => sum + record.total_price, 0) -
+                                            transactions_drink.reduce((sum, record) => sum + record.total_price, 0) * 0.35,
+                                    )}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
+                            <DataTable
+                                columns={[
+                                    {
+                                        id: 'menu_name',
+                                        accessorFn: (row) => row.menu ?? row.name ?? '',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Menu" />,
+                                        cell: ({ getValue }) => <span className="font-medium">{getValue() as string}</span>,
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'quantity',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Quantity" />,
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'base_price',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Base Price" />,
+                                        cell: ({ getValue }) => formatRupiah(getValue<number>()),
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'variant_price',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Variant Price" />,
+                                        cell: ({ getValue }) => formatRupiah(getValue<number>()),
+                                        enableSorting: true,
+                                    },
+                                    {
+                                        accessorKey: 'total_price',
+                                        header: ({ column }) => <DataTableColumnHeader column={column} title="Total Price" />,
+                                        cell: ({ getValue }) => formatRupiah(getValue<number>()),
+                                        enableSorting: true,
+                                    },
+                                ]}
+                                data={transactions_food}
+                                enableSearching
+                            />
+                            <div className="mt-4 flex flex-row justify-end gap-6">
+                                <span className="text-sm font-semibold">
+                                    Total Penjualan:
+                                    {formatRupiah(transactions_food.reduce((sum, record) => sum + record.total_price, 0))}
+                                </span>
+                                <span className="text-sm font-semibold">
+                                    Total est cost:
+                                    {formatRupiah(transactions_food.reduce((sum, record) => sum + record.total_price, 0) * 0.35)}
+                                </span>
+                                <span className="text-sm font-semibold">
+                                    Total est profit:
+                                    {formatRupiah(
+                                        transactions_food.reduce((sum, record) => sum + record.total_price, 0) -
+                                            transactions_food.reduce((sum, record) => sum + record.total_price, 0) * 0.35,
+                                    )}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
