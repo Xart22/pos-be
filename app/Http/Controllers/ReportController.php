@@ -9,26 +9,27 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Support\Carbon;
 
 class ReportController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index($start = null, $end = null)
     {
 
-        $now = now();
-        if ($request->input('period')) {
-            $period = $request->input('period');
-        } else {
-            $now = now();
-        }
+        $startDate = $start
+            ? Carbon::parse($start)->startOfDay()
+            : now()->startOfMonth();
+
+        $endDate = $end
+            ? Carbon::parse($end)->endOfDay()
+            : now()->endOfDay();
 
 
-        // Periode bulan berjalan: 1 s/d akhir bulan
-        $startOfPeriod = $now->copy()->startOfMonth();
-        $endOfPeriod   = $now->copy()->endOfMonth();
+        $startOfPeriod = $startDate;
+        $endOfPeriod = $endDate;
 
 
         $operational = Operational::get();
@@ -126,6 +127,8 @@ class ReportController extends Controller
             'period' => $startOfPeriod->format('Y-m'),
             'data_omset_daily'  => $dataOmsetDaily,
             'redem_ingredients' => $redemIngredients['sum_ingredients'],
+            'startDate' => $startOfPeriod->toDateString(),
+            'endDate' => $endOfPeriod->toDateString(),
         ]);
     }
 

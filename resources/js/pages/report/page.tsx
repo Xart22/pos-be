@@ -1,11 +1,13 @@
 // resources/js/Pages/Report/Index.tsx (misal)
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 
 import { DataTable } from '@/components/data-table';
 import { DataTableColumnHeader } from '@/components/data-table-column-header';
+import { Button } from '@/components/ui/button';
 import formatRupiah from '@/helper/formatRupiah';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, CashOut, EmployeeReport, IngredientSummary, Operational, StockRow } from '@/types';
+import { FormEvent, useState } from 'react';
 import { cashOutColumns, ingredientColumns, omsetColumns, rekapKaryawanColumns } from './colums';
 
 type ReportProps = {
@@ -29,6 +31,8 @@ type ReportProps = {
         bar: number;
         kitchen: number;
     }[];
+    startDate?: string;
+    endDate?: string;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -50,10 +54,49 @@ export default function ReportPage({
     redem_ingredients,
     period,
     data_omset_daily,
+    startDate,
+    endDate,
 }: ReportProps) {
+    // ====== STATE FILTER TANGGAL ======
+    const [start, setStart] = useState(startDate ?? '');
+    const [end, setEnd] = useState(endDate ?? '');
+
+    const handleFilter = (e: FormEvent) => {
+        e.preventDefault();
+
+        // Bangun URL sesuai optional param: /stock-opname/{start?}/{end?}
+        const segments: string[] = ['/report'];
+
+        if (start) segments.push(start);
+        if (end) segments.push(end);
+
+        const url = segments.join('/');
+
+        router.get(
+            url,
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+            },
+        );
+    };
+    const handleReset = () => {
+        setStart(startDate ?? '');
+        setEnd(endDate ?? '');
+        router.get('/report', {}, { preserveScroll: true });
+    };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Report" />
+
+            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+                <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+                    <span className="text-sm text-muted-foreground">
+                        Periode: {startDate} s/d {endDate}
+                    </span>
+                </div>
+            </div>
 
             <div className="space-y-6 px-4 py-6 md:px-8">
                 {/* HEADER PERIODE */}
@@ -63,6 +106,39 @@ export default function ReportPage({
                         Periode: <span className="font-semibold">{period}</span>
                     </p>
                 </div>
+                <form
+                    onSubmit={handleFilter}
+                    className="flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm md:flex-row md:items-end dark:bg-gray-900"
+                >
+                    <div className="flex flex-1 flex-col gap-1">
+                        <label className="text-sm font-medium">Start Date</label>
+                        <input
+                            type="date"
+                            className="h-9 rounded-md border px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-gray-900"
+                            value={start}
+                            onChange={(e) => setStart(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="flex flex-1 flex-col gap-1">
+                        <label className="text-sm font-medium">End Date</label>
+                        <input
+                            type="date"
+                            className="h-9 rounded-md border px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-gray-900"
+                            value={end}
+                            onChange={(e) => setEnd(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Button type="submit" className="mt-1 md:mt-0">
+                            Terapkan
+                        </Button>
+                        <Button type="button" variant="secondary" className="mt-1 md:mt-0" onClick={handleReset}>
+                            Reset
+                        </Button>
+                    </div>
+                </form>
                 {/* CONTOH SUMMARY KECIL DI ATAS (OPSIONAL) */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div className="rounded-xl border bg-card p-4">

@@ -73,7 +73,7 @@ Route::middleware(['auth', 'verified',])->group(function () {
         ->name('stock-opname.index');
 
 
-    Route::get('/report', [ReportController::class, 'index'])
+    Route::get('/report/{start?}/{end?}', [ReportController::class, 'index'])
         ->name('report.index');
 });
 
