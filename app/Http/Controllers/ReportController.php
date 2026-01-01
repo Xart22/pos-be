@@ -35,8 +35,7 @@ class ReportController extends Controller
         $operational = Operational::get();
         $sumOperational = $operational->sum('price');
         $cashOut = CashOut::whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])->get();
-
-
+        $sumOperational = $sumOperational - $cashOut->where('kategori', 'Operasional')->sum('amount');
         //merge cashout if same tanggal
         $cashOut = $cashOut->groupBy('tanggal')->map(function ($item, $key) {
             return [
