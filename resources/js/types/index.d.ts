@@ -186,6 +186,7 @@ export interface CashOut {
     desc: string;
     amount: number;
     tanggal: string;
+    kategori: string;
 }
 
 export type UsedIngredient = {

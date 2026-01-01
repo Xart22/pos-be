@@ -149,6 +149,13 @@ export const cashOutColumns: ColumnDef<CashOut>[] = [
         },
         enableSorting: true,
     },
+    {
+        accessorKey: 'kategori',
+        id: 'kategori',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Kategori" />,
+        cell: ({ getValue }) => <span>{getValue() as string}</span>,
+        enableSorting: true,
+    },
 ];
 
 export const rekapKaryawanColumns: ColumnDef<EmployeeReport>[] = [

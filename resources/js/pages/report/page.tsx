@@ -198,8 +198,8 @@ export default function ReportPage({
                 <div className="rounded-xl border bg-card">
                     <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
                         <div>
-                            <h2 className="text-lg font-semibold">Rekap Penjualan Best Seller</h2>
-                            <p className="text-xs text-muted-foreground">Rekap penjualan menu makanan dan minuman terlaris selama periode ini.</p>
+                            <h2 className="text-lg font-semibold">Rekap Penjualan</h2>
+                            <p className="text-xs text-muted-foreground">Rekap penjualan menu makanan dan minuman selama periode ini.</p>
                         </div>
                     </div>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -257,6 +257,24 @@ export default function ReportPage({
                                     )}
                                 </span>
                             </div>
+                            <div className="mt-4 flex flex-row justify-end gap-6">
+                                <span className="text-sm font-semibold">
+                                    Total Penjualan:
+                                    {formatRupiah(transactions_drink.reduce((sum, record) => sum + record.total_price, 0))}
+                                </span>
+                                {/* where CashOut Kategori = 'Bar' */}
+                                <span className="text-sm font-semibold">
+                                    Total CashOut:
+                                    {formatRupiah(cash_out.reduce((sum, record) => (record.kategori === 'Bar' ? sum + record.amount : sum), 0))}
+                                </span>
+                                <span className="text-sm font-semibold">
+                                    Total profit:
+                                    {formatRupiah(
+                                        transactions_drink.reduce((sum, record) => sum + record.total_price, 0) -
+                                            cash_out.reduce((sum, record) => (record.kategori === 'Bar' ? sum + record.amount : sum), 0),
+                                    )}
+                                </span>
+                            </div>
                         </div>
                         <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
                             <DataTable
@@ -309,6 +327,23 @@ export default function ReportPage({
                                     {formatRupiah(
                                         transactions_food.reduce((sum, record) => sum + record.total_price, 0) -
                                             transactions_food.reduce((sum, record) => sum + record.total_price, 0) * 0.35,
+                                    )}
+                                </span>
+                            </div>
+                            <div className="mt-4 flex flex-row justify-end gap-6">
+                                <span className="text-sm font-semibold">
+                                    Total Penjualan:
+                                    {formatRupiah(transactions_food.reduce((sum, record) => sum + record.total_price, 0))}
+                                </span>
+                                <span className="text-sm font-semibold">
+                                    Total cost:
+                                    {formatRupiah(cash_out.reduce((sum, record) => (record.kategori === 'Kitchen' ? sum + record.amount : sum), 0))}
+                                </span>
+                                <span className="text-sm font-semibold">
+                                    Total profit:
+                                    {formatRupiah(
+                                        transactions_food.reduce((sum, record) => sum + record.total_price, 0) -
+                                            cash_out.reduce((sum, record) => (record.kategori === 'Kitchen' ? sum + record.amount : sum), 0),
                                     )}
                                 </span>
                             </div>
@@ -376,9 +411,25 @@ export default function ReportPage({
                     <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
                         <DataTable columns={cashOutColumns} data={cash_out} enableSearching={true} />
                         {/* Total Omset */}
-                        <div className="mt-4 flex justify-end">
+                        <div className="mt-4 flex flex-row justify-end gap-6">
                             <span className="text-sm font-semibold">
-                                Total Cashout: {formatRupiah(cash_out.reduce((sum, record) => sum + record.amount, 0))}
+                                Total Bar :
+                                {formatRupiah(cash_out.reduce((sum, record) => (record.kategori === 'Bar' ? sum + record.amount : sum), 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total Kitchen :
+                                {formatRupiah(cash_out.reduce((sum, record) => (record.kategori === 'Kitchen' ? sum + record.amount : sum), 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total Operasional :
+                                {formatRupiah(cash_out.reduce((sum, record) => (record.kategori === 'Operasional' ? sum + record.amount : sum), 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total RND :
+                                {formatRupiah(cash_out.reduce((sum, record) => (record.kategori === 'RND' ? sum + record.amount : sum), 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total Cash Out :{formatRupiah(cash_out.reduce((sum, record) => sum + Number(record.amount), 0))}
                             </span>
                         </div>
                     </div>

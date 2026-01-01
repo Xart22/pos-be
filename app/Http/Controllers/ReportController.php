@@ -35,15 +35,25 @@ class ReportController extends Controller
         $operational = Operational::get();
         $sumOperational = $operational->sum('price');
         $cashOut = CashOut::whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])->get();
+
         $sumOperational = $sumOperational - $cashOut->where('kategori', 'Operasional')->sum('amount');
-        //merge cashout if same tanggal
-        $cashOut = $cashOut->groupBy('tanggal')->map(function ($item, $key) {
-            return [
-                'tanggal' => $key,
-                'description' => $item->pluck('description')->join('<br>'),
-                'amount' => $item->sum('amount'),
-            ];
-        })->values();
+        //merge cashout if same tanggal anda kategori
+        $cashOut = $cashOut
+            ->groupBy(fn($x) => $x->kategori . '|' . $x->tanggal)
+            ->map(function ($items, $groupKey) {
+                [$kategori, $tanggal] = explode('|', $groupKey, 2);
+
+                return [
+                    'tanggal'     => $tanggal,
+                    'kategori'    => $kategori,
+                    'description' => $items->pluck('description')->filter()->join("\n"), // lebih aman utk React
+                    'amount'      => (float) $items->sum('amount'),
+                ];
+            })
+            ->values()
+            // optional: sorting biar rapi
+            ->sortBy(['tanggal', 'kategori'])
+            ->values();
         $users = User::query()
             ->where('role', '!=', 'admin')
             ->withCount(['absensi as hadir_count' => function ($q) use ($startOfPeriod, $endOfPeriod) {
