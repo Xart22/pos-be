@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\CashDrawer;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -46,6 +47,25 @@ class AuthController extends Controller
         Auth::logout();
         return response()->json([
             'message' => 'Logged out'
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $user = User::where("id", 1)->first();
+
+
+        if (!password_verify($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Current password is incorrect'
+            ], 400);
+        }
+
+        $user->password = bcrypt($request->new_password);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password changed successfully'
         ]);
     }
 

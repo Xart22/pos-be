@@ -16,6 +16,8 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+Route::post('/change-password', [AuthController::class, 'changePassword']);
+
 
 Route::post('/login', [AuthController::class, 'login']);
 

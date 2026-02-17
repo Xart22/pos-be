@@ -186,6 +186,7 @@ export interface CashOut {
     desc: string;
     amount: number;
     tanggal: string;
+    kategori: string;
 }
 
 export type UsedIngredient = {
@@ -193,6 +194,7 @@ export type UsedIngredient = {
     name: string;
     unit: string;
     quantity: number;
+    cost: number;
 };
 
 export type StockRow = {
@@ -214,4 +216,20 @@ export type IngredientSummary = {
     unit: string;
     quantity: number;
     cost?: number;
+};
+
+export type CashBon = {
+    id: number;
+    jumlah: number;
+    tanggal: string;
+};
+
+export type EmployeeReport = {
+    name: string;
+    total_gaji: number;
+    base_gaji: number;
+    cashbon: CashBon[];
+    total_cashbon: number;
+    full_time: number;
+    gaji_bersih: number;
 };

@@ -33,6 +33,7 @@ const formSchema = z.object({
     rows: z.array(rowSchema).optional(),
     total: z.coerce.number({ error: 'Total harus berupa angka' }).min(0, { message: 'Total harus >= 0' }),
     description: z.string({ error: 'Deskripsi wajib diisi' }).min(1, { message: 'Deskripsi wajib diisi' }),
+    kategori: z.string(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -50,6 +51,7 @@ const createDefaultValues = (): FormValues => ({
     rows: [createDefaultRow()],
     total: 0,
     description: '',
+    kategori: '',
 });
 
 export default function CashOutPage({ bahanBaku }: CashOutProps) {
@@ -372,6 +374,42 @@ export default function CashOutPage({ bahanBaku }: CashOutProps) {
                                 Reset Form
                             </Button>
                         </div>
+
+                        {/* KATEGORI */}
+                        <FormField
+                            control={control}
+                            name="kategori"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Kategori</FormLabel>
+                                    <FormControl>
+                                        <Select
+                                            options={[
+                                                { label: 'Operasional', value: 'Operasional' },
+                                                { label: 'RND', value: 'RND' },
+                                                { label: 'Dapur', value: 'Kitchen' },
+                                                { label: 'Bar', value: 'Bar' },
+                                            ]}
+                                            value={
+                                                [
+                                                    { label: 'Operasional', value: 'Operasional' },
+                                                    { label: 'RND', value: 'RND' },
+                                                    { label: 'Dapur', value: 'Kitchen' },
+                                                    { label: 'Bar', value: 'Bar' },
+                                                ].find((opt) => opt.value === field.value) ?? null
+                                            }
+                                            onChange={(option) => {
+                                                const value = option?.value ?? '';
+                                                field.onChange(value);
+                                            }}
+                                            placeholder="Pilih kategori…"
+                                            menuPosition="fixed"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         {/* DESCRIPTION */}
                         <FormField

@@ -44,7 +44,7 @@ class CashOutController extends Controller
                         $bahanBaku->stock += $item['quantity'];
                         $bahanBaku->harga = $item['harga'];
                         $bahanBaku->save();
-                        $desc .= "<br>Pembelian - {$bahanBaku->name}: +{$item['quantity']} total = {$bahanBaku->stock} @ Rp. " . number_format($item['harga'], 0, ',', '.');
+                        $desc .= " \n Pembelian - {$bahanBaku->name}: +{$item['quantity']} total = {$bahanBaku->stock} @ Rp. " . number_format($item['harga'], 0, ',', '.');
                     }
                 }
             }
@@ -53,6 +53,7 @@ class CashOutController extends Controller
                 'amount' => $request->total,
                 'description' => trim($desc),
                 'tanggal' => $request->tanggal,
+                'kategori' => $request->kategori,
             ]);
 
             DB::commit();
