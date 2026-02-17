@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PoolPrintKitchen extends Model
 {
     protected $fillable = [
-        'order_id',
+        'transaction_id',
         'printed',
     ];
 

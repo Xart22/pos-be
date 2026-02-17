@@ -51,7 +51,7 @@ class PoolPrinter extends Controller
             'order_date'    => $pool->transaction->created_at->format('Y-m-d H:i:s'),
             'type'          => $pool->transaction->type,
             'customer_name' => $pool->transaction->customer_name,
-            'table_number'  => $pool->transaction->table_number,
+            'table_number'  => $pool->transaction->table_number ?? '-',
             'data'          => $order,
         ];
 
