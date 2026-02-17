@@ -80,6 +80,7 @@ Route::prefix('/unit')->group(function () {
 
 
 Route::get('/pool-print-kitchen', [PoolPrinter::class, 'index']);
+Route::post('/pool-print-kitchen/{id}/mark-printed', [PoolPrinter::class, 'update']);
 
 
 Route::get('/merge', [UtilsController::class, 'tes']);
