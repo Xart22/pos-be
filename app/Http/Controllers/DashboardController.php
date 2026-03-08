@@ -56,7 +56,9 @@ class DashboardController extends Controller
             $user = User::where('role', "!=", 'admin')->with(['absensiThisMonth', 'cashbons'])->get();
             $load = [];
             $totalGajiAll = (Operational::all()->sum('price') / $numberOfDays) * (int) $currentDate;
+            $cashbon = Cashbon::whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])->where('status', 'Disetujui')->sum('jumlah');
 
+            $cashOut = CashOut::whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])->where('kategori', 'Operasional')->sum('amount');
 
             foreach ($user as $usr) {
                 $baseGaji = $usr->base_gaji / 26;
@@ -76,7 +78,6 @@ class DashboardController extends Controller
             }
 
             foreach ($load as $name => $data) {
-
                 $totalGajiAll += $data['netto'];
             }
 
@@ -262,6 +263,9 @@ class DashboardController extends Controller
                 'totalCashOut' => $totalCashOut,
                 'totalGajiAll' => $totalGajiAll,
                 'load' => $load,
+                'cashbon' => $cashbon,
+                'cashOut' => $cashOut,
+
             ]);
         }
 

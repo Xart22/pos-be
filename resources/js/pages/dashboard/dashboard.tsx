@@ -31,6 +31,8 @@ type DashboardProps = {
     totalCashOut: string;
     totalGajiAll: string;
     load: boolean;
+    cashbon: string;
+    cashOut: string;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -60,13 +62,14 @@ export default function Dashboard({
     totalCashOut,
     totalGajiAll,
     load,
+    cashbon,
+    cashOut,
 }: DashboardProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="flex flex-col gap-2 p-4 md:p-6 lg:p-8">
                 <h1 className="text-center text-2xl font-bold text-muted-foreground">Omset</h1>
-
                 <div className="grid auto-rows-[1fr] grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="rounded-xl border border-border dark:border-gray-700">
                         <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
@@ -94,8 +97,24 @@ export default function Dashboard({
                         <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
                             <h2 className="text-base font-semibold text-muted-foreground">Saldo Operational</h2>
                             <p className="text-1xl font-bold text-primary md:text-2xl">{formatRupiah(parseFloat(totalGajiAll))}</p>
+                            <p className="text-primary">
+                                {formatRupiah(parseFloat(totalGajiAll))} - {formatRupiah(parseFloat(cashbon))} - {formatRupiah(parseFloat(cashOut))} ={' '}
+                                {formatRupiah(parseFloat(totalGajiAll) - parseFloat(cashbon) - parseFloat(cashOut))}
+                            </p>
                         </Card>
                     </div>
+                </div>
+                <div className="rounded-xl border border-border dark:border-gray-700">
+                    <Card className="flex h-full flex-col items-center justify-center p-6 text-center">
+                        <h2 className="text-base font-semibold text-muted-foreground">Total</h2>
+                        <p className="text-1xl font-bold text-primary md:text-2xl">
+                            {formatRupiah(parseFloat(omsetThisMonth) - parseFloat(totalCashOut))}{' '}
+                        </p>
+                        <p className="text-primary">
+                            {formatRupiah(parseFloat(omsetThisMonth))} - {formatRupiah(parseFloat(totalCashOut))} ={' '}
+                            {formatRupiah(parseFloat(omsetThisMonth) - parseFloat(totalCashOut))}
+                        </p>
+                    </Card>
                 </div>
                 <h2 className="text-center text-2xl font-bold text-muted-foreground">Transaksi</h2>
                 <div className="grid auto-rows-[1fr] grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4">
