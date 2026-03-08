@@ -9,6 +9,7 @@ use App\Http\Controllers\OperationalController;
 use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockOpnameController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -19,6 +20,12 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+
+    Route::get('transactions/detail/{id}', [TransactionController::class, 'getTransactionsById'])
+        ->name('transactions.show');
+
+    Route::get('transactions/{date?}', [TransactionController::class, 'getTransactions'])
+        ->name('transactions.index');
 
     Route::post('cashbon/request', [DashboardController::class, 'handleSubmitCashbon'])
         ->name('cashbon.request');

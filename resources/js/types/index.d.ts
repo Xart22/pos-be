@@ -169,6 +169,37 @@ export interface TransactionDetails {
     menu: Menu;
 }
 
+export interface Transaction {
+    id: number;
+    order_id: string;
+    customer_name: string | null;
+    table_number: string | null;
+    type: 'dine-in' | 'takeaway';
+    sub_total: number;
+    discount: number;
+    total_price: number;
+    payment_method: string;
+    cash: number;
+    change: number;
+    payment_proof: string | null;
+    created_at: string;
+    updated_at: string;
+    user: User;
+    details: TransactionDetails[];
+    [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface CashDrawer {
+    id: number;
+    opening_balance: number;
+    closing_balance: number | null;
+    expected_balance: number | null;
+    difference: number | null;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown; // This allows for additional properties...
+}
+
 export interface SumIngredients {
     bahan_baku_id: number;
     name: string;
