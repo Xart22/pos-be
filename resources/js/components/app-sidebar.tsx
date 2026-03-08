@@ -5,8 +5,6 @@ import { Link } from '@inertiajs/react';
 import { BookOpenText, CircleDollarSign, Database, LayoutGrid, User, Utensils } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const dateToday = new Date();
-
 const mainNavItems = [
     {
         title: 'Dashboard',
@@ -16,7 +14,7 @@ const mainNavItems = [
     },
     {
         title: 'Transactions',
-        url: '/transactions/' + dateToday.toISOString().split('T')[0], // Menggunakan tanggal hari ini
+        url: '/transactions/',
         icon: CircleDollarSign,
         isAdmin: false,
     },
