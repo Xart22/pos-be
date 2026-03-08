@@ -4,6 +4,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\BahanBakuController;
 use App\Http\Controllers\API\CategoriController;
 use App\Http\Controllers\API\MenuController;
+use App\Http\Controllers\API\PoolPrinter;
 use App\Http\Controllers\API\SettingsController;
 use App\Http\Controllers\API\TransactionController;
 use App\Http\Controllers\API\UtilsController;
@@ -76,6 +77,10 @@ Route::prefix('/ingredients')->group(function () {
 Route::prefix('/unit')->group(function () {
     Route::get('/', [BahanBakuController::class, 'index']);
 });
+
+
+Route::get('/pool-print-kitchen', [PoolPrinter::class, 'index']);
+Route::post('/pool-print-kitchen/{id}/mark-printed', [PoolPrinter::class, 'update']);
 
 
 Route::get('/merge', [UtilsController::class, 'tes']);

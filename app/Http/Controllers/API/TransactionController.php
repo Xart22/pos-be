@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BahanBaku;
 use App\Models\CashDrawer;
 use App\Models\Menu;
+use App\Models\PoolPrintKitchen;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use App\Models\TransactionDetailVariant;
@@ -53,7 +54,8 @@ class TransactionController extends Controller
                 'sub_total'      => $request->input('sub_total', 0),
             ];
 
-            $items = $request->input('items', []);
+            $items        = $request->input('items', []);
+            $foodCategory = [2, 3, 4, 5, 6, 7, 8, 9, 18];
 
             DB::beginTransaction();
 
@@ -68,13 +70,11 @@ class TransactionController extends Controller
             $menuIds = collect($items)->pluck('menu_id')->unique()->values();
 
             $menus = Menu::with([
-                'recipes.bahanBakus.bahanBaku', // recipe + bahan baku
+                'recipes.bahanBakus.bahanBaku',
             ])->whereIn('id', $menuIds)->get()->keyBy('id');
 
             $variantOptionIds = collect($items)
-                ->flatMap(function ($item) {
-                    return collect($item['options'] ?? [])->pluck('variant_option_id');
-                })
+                ->flatMap(fn($item) => collect($item['options'] ?? [])->pluck('variant_option_id'))
                 ->filter()
                 ->unique()
                 ->values();
@@ -86,6 +86,8 @@ class TransactionController extends Controller
             // ==========================
             // 3. LOOP ITEM TRANSAKSI
             // ==========================
+            $hasFoodItem = false;  // flag: apakah ada item kategori makanan
+
             foreach ($items as $item) {
                 $quantity = (int) ($item['quantity'] ?? 0);
                 $menuId   = $item['menu_id'];
@@ -110,52 +112,52 @@ class TransactionController extends Controller
                     ]);
                 }
 
+                // Cek apakah menu ini masuk kategori makanan
+                $menu = $menus->get($menuId);
+                if ($menu && in_array($menu->category_id, $foodCategory)) {
+                    $hasFoodItem = true;
+                }
+
                 // ==================================
                 // 4. KURANGI STOK BAHAN BAKU (INTI)
                 // ==================================
-                $menu = $menus->get($menuId);
                 if (!$menu || $quantity <= 0) {
                     continue;
                 }
 
-                // Ambil nama-nama variant option yang dipilih
                 $selectedOptionNames = collect($options)
-                    ->map(function ($opt) use ($variantOptions) {
-                        $vo = $variantOptions->get($opt['variant_option_id'] ?? null);
-                        return $vo ? $vo->name : null;
-                    })
+                    ->map(fn($opt) => optional($variantOptions->get($opt['variant_option_id'] ?? null))->name)
                     ->filter()
                     ->map(fn($name) => Str::lower($name))
                     ->values();
 
-                // Pilih recipe sesuai aturan (mirip di controller laporanmu)
                 $recipe = null;
 
                 if ($selectedOptionNames->contains(fn($n) => Str::contains($n, 'large'))) {
-                    // Recipe untuk Large (misal yang punya variant_options_id != null)
                     $recipe = $menu->recipes->firstWhere('variant_options_id', '!=', null);
                 } elseif ($selectedOptionNames->contains(fn($n) => Str::contains($n, 'reguler'))) {
-                    // Recipe reguler = recipe pertama
                     $recipe = $menu->recipes->first();
                 } else {
-                    // Default: pakai recipe pertama saja
                     $recipe = $menu->recipes->first();
                 }
 
-                if (!$recipe) {
-                    continue; // kalau belum ada recipe, jangan kurangi stok
-                }
+                if (!$recipe) continue;
 
-                // Loop bahan di recipe tersebut dan kurangi stok
                 foreach ($recipe->bahanBakus as $bahanResep) {
-                    $bahanBakuId = $bahanResep->bahan_baku_id;
-                    $jumlahPerCup = (float) $bahanResep->jumlah; // misal 20 Gram per cup
-                    $totalDipakai = $jumlahPerCup * $quantity;
-
-                    // Kurangi stok di tabel bahan baku
-                    BahanBaku::where('id', $bahanBakuId)
-                        ->decrement('stock', $totalDipakai);
+                    BahanBaku::where('id', $bahanResep->bahan_baku_id)
+                        ->decrement('stock', (float) $bahanResep->jumlah * $quantity);
                 }
+            }
+
+            // ==========================
+            // 5. INSERT KE POOL KITCHEN
+            // Hanya jika ada minimal 1 item kategori makanan
+            // ==========================
+            if ($hasFoodItem) {
+                PoolPrintKitchen::create([
+                    'transaction_id' => $transactionId,
+                    'printed'        => false,
+                ]);
             }
 
             DB::commit();
