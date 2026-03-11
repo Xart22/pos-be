@@ -1,25 +1,44 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Console\Commands;
 
-use App\Http\Controllers\Controller;
 use App\Models\BahanBaku;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class UtilsController extends Controller
+class CheckBahanBaku extends Command
 {
-    public function tes()
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'app:check-bahan-baku';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Command description';
+
+    /**
+     * Execute the console command.
+     */
+    public function handle()
     {
         $bahan = BahanBaku::where('per_unit', '!=', 0)->get();
         $textMassage = "Stok Bahan Baku yang hampir habis:\n\n";
+        $apiKey = env('WAHA_API_KEY', '');
+        $number = env('WAHA_CHAT_ID', '');
         try {
             Http::withHeaders([
-                'X-Api-Key' => 'c143ad5c6ac14ffb936b97f534330335',
+                'X-Api-Key' => $apiKey,
             ])->post(
                 'https://waha.outsidecoffee.id/api/startTyping',
                 [
-                    'chatId' => '82218902325@c.us',
+                    'chatId' => $number,
                     'session' => 'default',
                 ]
             );
@@ -40,15 +59,16 @@ class UtilsController extends Controller
                 $textMassage .= "- " . $item->name . " (Stok: " . $item->stock . ")\n";
             }
         }
+        sleep(5);
         if (strlen($textMassage) > strlen("Stok Bahan Baku yang hampir habis:\n\n")) {
 
             try {
                 Http::withHeaders([
-                    'X-Api-Key' => 'c143ad5c6ac14ffb936b97f534330335',
+                    'X-Api-Key' => $apiKey,
                 ])->post(
                     'https://waha.outsidecoffee.id/api/sendText',
                     [
-                        'chatId' => '82218902325@c.us',
+                        'chatId' => $number,
                         'text' => $textMassage,
                         'session' => 'default',
                     ]
