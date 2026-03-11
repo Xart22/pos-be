@@ -70,9 +70,9 @@ class MenuController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            if ($request->hasFile('image')) {
-                Storage::disk('local')->delete($request->input('image'));
-            }
+            // if ($request->hasFile('image')) {
+            //     Storage::disk('local')->delete($request->input('image'));
+            // }
             return response()->json($e->getMessage(), 500);
         }
     }
