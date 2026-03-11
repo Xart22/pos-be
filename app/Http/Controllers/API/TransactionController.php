@@ -56,6 +56,9 @@ class TransactionController extends Controller
 
             $items        = $request->input('items', []);
             $foodCategory = [2, 3, 4, 5, 6, 7, 8, 9, 18];
+            $discountAmount = (float) $request->input('discount', 0);
+            $totalAmount = (float) $request->input('total', 0);
+            $isFullDiscount = $totalAmount > 0 && abs($discountAmount - $totalAmount) < 0.01;
 
             DB::beginTransaction();
 
@@ -142,8 +145,11 @@ class TransactionController extends Controller
                 }
 
                 if (!$recipe) continue;
-
+                $redeemNotAllowed = [4, 11, 10];
                 foreach ($recipe->bahanBakus as $bahanResep) {
+                    if ($isFullDiscount && in_array($bahanResep->bahan_baku_id, $redeemNotAllowed)) {
+                        continue;
+                    }
                     BahanBaku::where('id', $bahanResep->bahan_baku_id)
                         ->decrement('stock', (float) $bahanResep->jumlah * $quantity);
                 }
