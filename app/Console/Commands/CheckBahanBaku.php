@@ -60,6 +60,16 @@ class CheckBahanBaku extends Command
             }
         }
         sleep(5);
+        Http::withHeaders([
+            'X-Api-Key' => $apiKey,
+        ])->post(
+            'https://waha.outsidecoffee.id/api/stopTyping',
+            [
+                'chatId' => $number,
+                'session' => 'default',
+            ]
+        );
+        sleep(2);
         if (strlen($textMassage) > strlen("Stok Bahan Baku yang hampir habis:\n\n")) {
 
             try {
