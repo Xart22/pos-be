@@ -9,4 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 
-Schedule::command('app:check-bahan-baku')->dailyAt('10:15')->timezone('Asia/Jakarta');
+Schedule::command('app:check-bahan-baku')->dailyAt('10:00')->timezone('Asia/Jakarta');
