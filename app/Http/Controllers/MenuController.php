@@ -69,7 +69,7 @@ class MenuController extends Controller
         } catch (\Throwable $th) {
             DB::rollBack();
 
-            return redirect()->route('menu.index')->with('error', 'Gagal menambahkan menu.');
+            return redirect()->route('menu.index')->with('error', $th->getMessage());
         }
     }
 
@@ -120,7 +120,7 @@ class MenuController extends Controller
         } catch (\Throwable $th) {
             DB::rollBack();
 
-            return redirect()->route('menu.index')->with('error', 'Gagal memperbarui menu.');
+            return redirect()->route('menu.index')->with('error', $th->getMessage());
         }
     }
 
