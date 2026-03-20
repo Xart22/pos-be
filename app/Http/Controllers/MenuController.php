@@ -47,8 +47,8 @@ class MenuController extends Controller
 
             $imagePath = $validated['image'] ?? '';
             if ($request->hasFile('image_file')) {
-                $path = $request->file('image_file')->store('public/images/menu');
-                $imagePath = str_replace('public/', 'storage/', $path);
+                $path = $request->file('image_file')->store('images/menu', 'public');
+                $imagePath = 'storage/' . $path;
             }
 
             Menu::create([
@@ -98,8 +98,8 @@ class MenuController extends Controller
 
             $imagePath = $validated['image'] ?? $menu->image;
             if ($request->hasFile('image_file')) {
-                $path = $request->file('image_file')->store('public/images/menu');
-                $imagePath = str_replace('public/', 'storage/', $path);
+                $path = $request->file('image_file')->store('images/menu', 'public');
+                $imagePath = 'storage/' . $path;
             }
 
             $menu->update([
