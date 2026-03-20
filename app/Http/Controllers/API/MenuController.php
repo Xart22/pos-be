@@ -32,7 +32,7 @@ class MenuController extends Controller
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $filename = time() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('public/images/menu', $filename);
+                $path = Storage::disk('public')->putFileAs('images/menu', $file, $filename);
                 $dbPath = str_replace('public/', 'storage/', $path);
                 $request->merge(['image' => $dbPath]);
             }
@@ -70,9 +70,9 @@ class MenuController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            // if ($request->hasFile('image')) {
-            //     Storage::disk('local')->delete($request->input('image'));
-            // }
+            if ($request->hasFile('image')) {
+                Storage::disk('public')->delete($request->input('image'));
+            }
             return response()->json($e->getMessage(), 500);
         }
     }
@@ -83,7 +83,7 @@ class MenuController extends Controller
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $filename = time() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('public/images/menu', $filename);
+                $path = Storage::disk('public')->putFileAs('images/menu', $file, $filename);
                 $dbPath = str_replace('public/', 'storage/', $path);
                 $request->merge(['image' => $dbPath]);
             }
@@ -126,7 +126,7 @@ class MenuController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             if ($request->hasFile('image')) {
-                Storage::disk('local')->delete($request->input('image'));
+                Storage::disk('public')->delete($request->input('image'));
             }
             return response()->json($e->getMessage(), 500);
         }

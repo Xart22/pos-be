@@ -67,13 +67,16 @@ export interface OptionsVariant {
 export interface Menu {
     id: number;
     categoryId: string;
+    category_id?: number;
     name: string;
     price: number;
     description: string;
     image: string;
+    image_local?: string;
     stock: number;
     is_active: boolean;
     is_online: boolean;
+    category?: Category;
     variants?: Variants[];
     recipes?: Recipe[];
     [key: string]: unknown; // This allows for additional properties...

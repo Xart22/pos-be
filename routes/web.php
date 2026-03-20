@@ -34,6 +34,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('master-data/menu', [MenuController::class, 'index'])
         ->name('menu.index');
 
+    Route::post('master-data/menu', [MenuController::class, 'store'])
+        ->name('menu.store');
+
+    Route::put('master-data/menu/{id}', [MenuController::class, 'update'])
+        ->name('menu.update');
+
+    Route::delete('master-data/menu/{id}', [MenuController::class, 'destroy'])
+        ->name('menu.destroy');
+
 
     Route::post('dashboard/absensi', [DashboardController::class, 'handleSubmit'])
         ->name('dashboard.absensi.submit');
