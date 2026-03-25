@@ -55,6 +55,58 @@ export const omsetColumns: ColumnDef<{ date: string; omset: number; qris: number
         enableSorting: true,
     },
     {
+        id: 'laba_kotor',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Laba Kotor" />,
+        cell: ({ row }) => {
+            const omset = row.original.omset as number;
+            const costBahan = ((row.original as any).cost_bahan as number) ?? 0;
+            return <span>{formatRupiah(omset - costBahan)}</span>;
+        },
+        enableSorting: false,
+    },
+    {
+        accessorKey: 'cost_bahan',
+        id: 'cost_bahan',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="HPP / Cost Bahan" />,
+        cell: ({ getValue }) => {
+            const costBahan = getValue() as number;
+            return <span>{formatRupiah(costBahan ?? 0)}</span>;
+        },
+        enableSorting: true,
+    },
+    {
+        accessorKey: 'cost_gaji',
+        id: 'cost_gaji',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Biaya Gaji" />,
+        cell: ({ getValue }) => {
+            const gajiCost = getValue() as number;
+            return <span>{formatRupiah(gajiCost)}</span>;
+        },
+        enableSorting: true,
+    },
+    {
+        accessorKey: 'cost_operational',
+        id: 'cost_operational',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Biaya Operasional" />,
+        cell: ({ getValue }) => {
+            const operationalCost = getValue() as number;
+            return <span>{formatRupiah(operationalCost)}</span>;
+        },
+        enableSorting: true,
+    },
+    {
+        id: 'laba_bersih',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Laba Bersih" />,
+        cell: ({ row }) => {
+            const omset = row.original.omset as number;
+            const costBahan = ((row.original as any).cost_bahan as number) ?? 0;
+            const operationalCost = ((row.original as any).cost_operational as number) ?? 0;
+            const gajiCost = ((row.original as any).cost_gaji as number) ?? 0;
+            const labaBersih = omset - costBahan - operationalCost - gajiCost;
+            return <span className={labaBersih < 0 ? 'text-red-500' : ''}>{formatRupiah(labaBersih)}</span>;
+        },
+    },
+    {
         accessorKey: 'bar',
         id: 'bar',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Bar" />,

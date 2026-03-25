@@ -34,9 +34,9 @@ class ReportController extends Controller
 
         $operational = Operational::get();
         $sumOperational = $operational->sum('price');
+
         $cashOut = CashOut::whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])->get();
 
-        $sumOperational = $sumOperational - $cashOut->where('kategori', 'Operasional')->sum('amount');
         //merge cashout if same tanggal anda kategori
         $cashOut = $cashOut
             ->groupBy(fn($x) => $x->kategori . '|' . $x->tanggal)
@@ -66,6 +66,8 @@ class ReportController extends Controller
             }])
             ->get();
 
+        $data_karyawan = [];
+
         foreach ($users as $u) {
             $gajiHadir = (int)$u->hadir_count * ((float)$u->base_gaji / 26);
             $totalCashbon = (float)$u->cashbon->sum('jumlah');
@@ -81,12 +83,14 @@ class ReportController extends Controller
                 'gaji_bersih' => $gajiHadir - $totalCashbon,
                 'hadir' => (int)$u->hadir_count,
                 'full_time' => $u->shift,
+                'data_absensi' => $u->absensi()->whereBetween('tanggal', [$startOfPeriod, $endOfPeriod])->get()->values(),
             ];
         }
 
 
         $usedIngredients = $this->generateReport($startOfPeriod, $endOfPeriod);
         $redemIngredients = $this->generateReport($startOfPeriod, $endOfPeriod, true);
+        $costByDate       = $usedIngredients['cost_by_date'];
         $omset = DB::table('transactions')
             ->selectRaw('DATE(created_at) as date')
             ->selectRaw('SUM(total_price) as omset')
@@ -103,28 +107,51 @@ class ReportController extends Controller
 
         $splitOmset = $this->splitOmset($startOfPeriod, $endOfPeriod);
 
+        $splitDays = max($splitOmset->count(), 1);
+
         $dataOmsetDaily = DB::query()
             ->fromSub($omset, 'o')
             ->leftJoinSub($drawer, 'd', 'o.date', '=', 'd.date')
             ->orderBy('o.date')
             ->get()
-            ->map(function ($r) use ($splitOmset) {
+            ->map(function ($r) use ($splitOmset, $sumOperational, $data_karyawan, $splitDays, $costByDate) {
                 $split = $splitOmset->get($r->date); // ini array atau null
+                $totalGaji = 0;
+                foreach ($data_karyawan as $karyawan) {
+                    $hadir = $karyawan['data_absensi']->first(function ($absensi) use ($r) {
+                        return Carbon::parse($absensi->tanggal)->toDateString() === $r->date;
+                    });
+
+                    if (!$hadir) {
+                        continue;
+                    }
+
+                    $baseGajiHarian = (float) $karyawan['base_gaji'] / 26;
+                    $totalGaji += $baseGajiHarian;
+
+                    if (($hadir->shift ?? null) === 'Full Time') {
+                        $totalGaji += $baseGajiHarian;
+                    }
+                }
 
                 return [
-                    'date'            => $r->date,
-                    'omset'           => (float) $r->omset,
-                    'qris'            => (float) $r->qris,
-                    'opening_balance' => (float) ($r->opening_balance ?? 0),
-                    'cash'            => (float) $r->cash,
-                    'total_cash'      => (float) $r->cash + (float) ($r->opening_balance ?? 0),
-                    'bar'             => (float) ($split['bar'] ?? 0),
-                    'kitchen'         => (float) ($split['kitchen'] ?? 0),
-                    'unknown'         => (float) ($split['unknown'] ?? 0),
+                    'date'             => $r->date,
+                    'omset'            => (float) $r->omset,
+                    'qris'             => (float) $r->qris,
+                    'opening_balance'  => (float) ($r->opening_balance ?? 0),
+                    'cash'             => (float) $r->cash,
+                    'total_cash'       => (float) $r->cash + (float) ($r->opening_balance ?? 0),
+                    'bar'              => (float) ($split['bar'] ?? 0),
+                    'kitchen'          => (float) ($split['kitchen'] ?? 0),
+                    'unknown'          => (float) ($split['unknown'] ?? 0),
+                    'cost_operational' => $sumOperational / $splitDays,
+                    'cost_gaji'        => (float) $totalGaji,
+                    'cost_bahan'       => (float) ($costByDate->get($r->date) ?? 0),
                 ];
             });
 
 
+        $sumOperational = $sumOperational - $cashOut->where('kategori', 'Operasional')->sum('amount');
         return Inertia::render('report/page', [
             'operational'       => $operational,
             'sum_operational'   => $sumOperational,
@@ -221,6 +248,7 @@ class ReportController extends Controller
         $transDrink     = [];
         $transUnknown   = [];
         $sumIngredients = [];
+        $costByDate     = [];
 
         $operator = $isRedem ? '=' : '>';
 
@@ -237,10 +265,16 @@ class ReportController extends Controller
                 &$transFood,
                 &$transDrink,
                 &$transUnknown,
+                &$costByDate,
                 $foodSet,
                 $drinkSet
             ) {
                 foreach ($transactions as $transaction) {
+                    $date = $transaction->created_at->format('Y-m-d');
+                    if (!isset($costByDate[$date])) {
+                        $costByDate[$date] = 0.0;
+                    }
+
                     foreach ($transaction->details as $detail) {
                         $menu = $detail->menu;
                         if (!$menu) continue;
@@ -297,7 +331,7 @@ class ReportController extends Controller
                         // ==========================
                         $usedIngredients = [];
 
-                        if ($recipe && $recipe->bahanBakus) {
+                        if ($recipe && $recipe->bahanBakus && $recipe->bahanBakus->count() > 0) {
                             foreach ($recipe->bahanBakus as $bahanResep) {
                                 $bb = $bahanResep->bahanBaku;
 
@@ -308,7 +342,7 @@ class ReportController extends Controller
 
                                 $harga   = (float) ($bb->harga ?? 0);
                                 $perUnit = (float) ($bb->per_unit ?? 0);
-                                if ($perUnit <= 0) $perUnit = 1; // ✅ anti div 0
+                                if ($perUnit <= 0) $perUnit = 1; // anti div 0
 
                                 $cost = ($harga / $perUnit) * $qtyUsed;
 
@@ -320,6 +354,24 @@ class ReportController extends Controller
                                     'cost'          => (float) $cost,
                                 ];
                             }
+                        }
+
+                        // Fallback: produk tanpa resep → estimasi 40% dari harga jual
+                        if (empty($usedIngredients)) {
+                            $estimatedCost = ($basePrice + $variantPricePerItem) * $quantity * 0.4;
+                            $usedIngredients[] = [
+                                'bahan_baku_id' => 0,
+                                'name'          => '(Estimasi 40% - ' . $baseKey . ')',
+                                'unit'          => '-',
+                                'quantity'      => (float) $quantity,
+                                'cost'          => (float) $estimatedCost,
+                                'estimated'     => true,
+                            ];
+                        }
+
+                        // Akumulasi cost harian
+                        foreach ($usedIngredients as $ing) {
+                            $costByDate[$date] += (float) $ing['cost'];
                         }
 
                         // ==========================
@@ -425,10 +477,11 @@ class ReportController extends Controller
         }
 
         return [
-            'transactions_food'  => array_values($transFood),
-            'transactions_drink' => array_values($transDrink),
+            'transactions_food'    => array_values($transFood),
+            'transactions_drink'   => array_values($transDrink),
             'transactions_unknown' => array_values($transUnknown),
-            'sum_ingredients'    => array_values($sumIngredients),
+            'sum_ingredients'      => array_values($sumIngredients),
+            'cost_by_date'         => collect($costByDate),
         ];
     }
 

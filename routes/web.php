@@ -10,6 +10,7 @@ use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockOpnameController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -18,6 +19,18 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/users', [UsersController::class, 'index'])
+        ->name('users.index');
+
+    Route::post('/users', [UsersController::class, 'store'])
+        ->name('users.store');
+
+    Route::put('/users/{id}', [UsersController::class, 'update'])
+        ->name('users.update');
+
+    Route::delete('/users/{id}', [UsersController::class, 'destroy'])
+        ->name('users.destroy');
+
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 

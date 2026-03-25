@@ -30,6 +30,10 @@ type ReportProps = {
         total_cash: number;
         bar: number;
         kitchen: number;
+        unknown: number;
+        cost_operational: number;
+        cost_gaji: number;
+        cost_bahan: number;
     }[];
     startDate?: string;
     endDate?: string;
@@ -140,7 +144,7 @@ export default function ReportPage({
                     </div>
                 </form>
                 {/* CONTOH SUMMARY KECIL DI ATAS (OPSIONAL) */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                     <div className="rounded-xl border bg-card p-4">
                         <p className="text-xs text-muted-foreground">Total Omset</p>
                         <p className="text-lg font-semibold">{formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.omset, 0))}</p>
@@ -150,22 +154,26 @@ export default function ReportPage({
                         <p className="text-lg font-semibold">{formatRupiah(cash_out.reduce((sum, record) => sum + Number(record.amount), 0))}</p>
                     </div>
                     <div className="rounded-xl border bg-card p-4">
-                        <p className="text-xs text-muted-foreground">Total Operasional</p>
+                        <p className="text-xs text-muted-foreground">Total HPP (Cost Bahan)</p>
+                        <p className="text-lg font-semibold">{formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.cost_bahan, 0))}</p>
+                    </div>
+                    <div className="rounded-xl border bg-card p-4">
+                        <p className="text-xs text-muted-foreground">Total Laba Kotor</p>
                         <p className="text-lg font-semibold">
-                            {formatRupiah(Number(sum_operational + data_karyawan.reduce((sum, record) => sum + record.gaji_bersih, 0)))}
+                            {formatRupiah(
+                                data_omset_daily.reduce((sum, record) => sum + record.omset, 0) -
+                                    data_omset_daily.reduce((sum, record) => sum + record.cost_bahan, 0),
+                            )}
                         </p>
                     </div>
                     <div className="rounded-xl border bg-card p-4">
-                        <p className="text-xs text-muted-foreground">Total Profit</p>
+                        <p className="text-xs text-muted-foreground">Total Laba Bersih</p>
                         <p className="text-lg font-semibold">
-                            {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.omset, 0))} -{' '}
-                            {formatRupiah(cash_out.reduce((sum, record) => sum + Number(record.amount), 0))} + {formatRupiah(Number(sum_operational))}{' '}
-                            + {formatRupiah(data_karyawan.reduce((sum, record) => sum + record.gaji_bersih, 0))} ={' '}
                             {formatRupiah(
                                 data_omset_daily.reduce((sum, record) => sum + record.omset, 0) -
-                                    cash_out.reduce((sum, record) => sum + Number(record.amount), 0) -
-                                    Number(sum_operational) -
-                                    data_karyawan.reduce((sum, record) => sum + record.gaji_bersih, 0),
+                                    data_omset_daily.reduce((sum, record) => sum + record.cost_bahan, 0) -
+                                    data_omset_daily.reduce((sum, record) => sum + record.cost_operational, 0) -
+                                    data_omset_daily.reduce((sum, record) => sum + record.cost_gaji, 0),
                             )}
                         </p>
                     </div>
@@ -191,6 +199,32 @@ export default function ReportPage({
                             </span>
                             <span className="text-sm font-semibold">
                                 Total Cash: {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.cash, 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                HPP / Cost Bahan:
+                                {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.cost_bahan, 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Laba Kotor:
+                                {formatRupiah(
+                                    data_omset_daily.reduce((sum, record) => sum + record.omset, 0) -
+                                        data_omset_daily.reduce((sum, record) => sum + record.cost_bahan, 0),
+                                )}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Operasional: {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.cost_operational, 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Gaji: {formatRupiah(data_omset_daily.reduce((sum, record) => sum + record.cost_gaji, 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Laba Bersih:
+                                {formatRupiah(
+                                    data_omset_daily.reduce((sum, record) => sum + record.omset, 0) -
+                                        data_omset_daily.reduce((sum, record) => sum + record.cost_bahan, 0) -
+                                        data_omset_daily.reduce((sum, record) => sum + record.cost_operational, 0) -
+                                        data_omset_daily.reduce((sum, record) => sum + record.cost_gaji, 0),
+                                )}
                             </span>
                         </div>
                     </div>
