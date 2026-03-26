@@ -16,8 +16,10 @@ class CashOutController extends Controller
     public function index()
     {
         $bahanBaku = BahanBaku::all();
+        $cashOutData = CashOut::whereMonth('tanggal', date('m'))->whereYear('tanggal', date('Y'))->get();
         return Inertia::render('cash-flow/cash-out/page', [
             'bahanBaku' => $bahanBaku,
+            'cashOutData' => $cashOutData,
         ]);
     }
 
@@ -41,10 +43,11 @@ class CashOutController extends Controller
                 if ($item['bahan_baku_id'] != 78) {
                     $bahanBaku = BahanBaku::where('id', $item['bahan_baku_id'])->first();
                     if ($bahanBaku) {
+                        $desc .= " \n Pembelian - {$bahanBaku->name}: +{$item['quantity']} \n Stock: {$bahanBaku->stock} \n";
                         $bahanBaku->stock += $item['quantity'];
                         $bahanBaku->harga = $item['harga'];
+                        $desc .= "Total Stock: {$bahanBaku->stock} \n";
                         $bahanBaku->save();
-                        $desc .= " \n Pembelian - {$bahanBaku->name}: +{$item['quantity']} total = {$bahanBaku->stock} @ Rp. " . number_format($item['harga'], 0, ',', '.');
                     }
                 }
             }
@@ -54,6 +57,7 @@ class CashOutController extends Controller
                 'description' => trim($desc),
                 'tanggal' => $request->tanggal,
                 'kategori' => $request->kategori,
+                'source' => $request->source,
             ]);
 
             DB::commit();

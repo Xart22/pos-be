@@ -444,7 +444,16 @@ export default function ReportPage({
 
                     <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
                         <DataTable columns={cashOutColumns} data={cash_out} enableSearching={true} />
-                        {/* Total Omset */}
+                        <div className="mt-4 flex flex-row justify-end gap-6">
+                            <span className="text-sm font-semibold">
+                                Total Cash :
+                                {formatRupiah(cash_out.reduce((sum, record) => (record.source === 'Cash' ? sum + record.amount : sum), 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total Debit :
+                                {formatRupiah(cash_out.reduce((sum, record) => (record.source === 'Debit' ? sum + record.amount : sum), 0))}
+                            </span>
+                        </div>
                         <div className="mt-4 flex flex-row justify-end gap-6">
                             <span className="text-sm font-semibold">
                                 Total Bar :

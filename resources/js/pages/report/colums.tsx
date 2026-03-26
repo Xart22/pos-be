@@ -208,6 +208,13 @@ export const cashOutColumns: ColumnDef<CashOut>[] = [
         cell: ({ getValue }) => <span>{getValue() as string}</span>,
         enableSorting: true,
     },
+    {
+        accessorKey: 'source',
+        id: 'source',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Sumber Dana" />,
+        cell: ({ getValue }) => <span>{getValue() as string}</span>,
+        enableSorting: true,
+    },
 ];
 
 export const rekapKaryawanColumns: ColumnDef<EmployeeReport>[] = [

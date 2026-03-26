@@ -16,7 +16,8 @@ return new class extends Migration
             $table->date('tanggal');
             $table->foreignId('bahan_baku_id')->constrained('bahan_bakus')->onDelete('cascade')->nullable();
             $table->longText('description');
-
+            $table->enum('kategori', ['Kitchen', 'Bar', 'Operasional', 'Lainnya'])->nullable();
+            $table->enum('source', ['Cash', 'Debit'])->nullable();
             $table->integer('amount');
             $table->timestamps();
         });

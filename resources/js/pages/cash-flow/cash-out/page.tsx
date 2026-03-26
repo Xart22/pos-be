@@ -5,16 +5,19 @@ import { Resolver, useFieldArray, useForm } from 'react-hook-form';
 import Select from 'react-select';
 import { z } from 'zod';
 
+import { DataTable } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import formatRupiah from '@/helper/formatRupiah';
 import AppLayout from '@/layouts/app-layout';
-import { BahanBaku, BreadcrumbItem } from '@/types';
+import { cashOutColumns } from '@/pages/report/colums';
+import { BahanBaku, BreadcrumbItem, CashOut } from '@/types';
 
 type CashOutProps = {
     bahanBaku: BahanBaku[];
+    cashOutData: CashOut[]; // Tambahkan tipe untuk data cash out
 };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Cash Out', href: '/cash-flow/cash-out' }];
@@ -34,6 +37,7 @@ const formSchema = z.object({
     total: z.coerce.number({ error: 'Total harus berupa angka' }).min(0, { message: 'Total harus >= 0' }),
     description: z.string({ error: 'Deskripsi wajib diisi' }).min(1, { message: 'Deskripsi wajib diisi' }),
     kategori: z.string(),
+    source: z.string(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -52,9 +56,10 @@ const createDefaultValues = (): FormValues => ({
     total: 0,
     description: '',
     kategori: '',
+    source: '',
 });
 
-export default function CashOutPage({ bahanBaku }: CashOutProps) {
+export default function CashOutPage({ bahanBaku, cashOutData }: CashOutProps) {
     // Options select bahan baku
     const ingredientOptions = useMemo(
         () =>
@@ -145,7 +150,6 @@ export default function CashOutPage({ bahanBaku }: CashOutProps) {
                     <h1 className="text-2xl font-bold tracking-tight">Cash Out</h1>
                     <p className="text-sm text-muted-foreground">Catat pengeluaran bahan baku dengan rapi dan biarkan sistem yang hitung totalnya.</p>
                 </div>
-
                 <Form {...form}>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 rounded-xl border bg-white p-4 shadow-sm dark:bg-gray-900">
                         {/* TANGGAL */}
@@ -411,6 +415,38 @@ export default function CashOutPage({ bahanBaku }: CashOutProps) {
                             )}
                         />
 
+                        {/* KATEGORI */}
+                        <FormField
+                            control={control}
+                            name="source"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Sumber Dana</FormLabel>
+                                    <FormControl>
+                                        <Select
+                                            options={[
+                                                { label: 'Cash', value: 'Cash' },
+                                                { label: 'Debit', value: 'Debit' },
+                                            ]}
+                                            value={
+                                                [
+                                                    { label: 'Cash', value: 'Cash' },
+                                                    { label: 'Debit', value: 'Debit' },
+                                                ].find((opt) => opt.value === field.value) ?? null
+                                            }
+                                            onChange={(option) => {
+                                                const value = option?.value ?? '';
+                                                field.onChange(value);
+                                            }}
+                                            placeholder="Pilih sumber dana…"
+                                            menuPosition="fixed"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
                         {/* DESCRIPTION */}
                         <FormField
                             control={control}
@@ -449,7 +485,52 @@ export default function CashOutPage({ bahanBaku }: CashOutProps) {
                             <Button type="submit">Simpan Cash Out</Button>
                         </div>
                     </form>
-                </Form>
+                </Form>{' '}
+                <div className="rounded-xl border bg-card">
+                    <div className="flex items-center justify-between px-4 pt-4 md:px-6 md:pt-6">
+                        <div>
+                            <h2 className="text-lg font-semibold">Laporan Cash Out</h2>
+                            <p className="text-xs text-muted-foreground">Rekap pengeluaran kas (cash out) selama periode ini.</p>
+                        </div>
+                    </div>
+
+                    <div className="px-2 pt-2 pb-4 md:px-6 md:pb-6">
+                        <DataTable columns={cashOutColumns} data={cashOutData} enableSearching={true} />
+                        <div className="mt-4 flex flex-row justify-end gap-6">
+                            <span className="text-sm font-semibold">
+                                Total Cash :
+                                {formatRupiah(cashOutData.reduce((sum, record) => (record.source === 'Cash' ? sum + record.amount : sum), 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total Debit :
+                                {formatRupiah(cashOutData.reduce((sum, record) => (record.source === 'Debit' ? sum + record.amount : sum), 0))}
+                            </span>
+                        </div>
+                        <div className="mt-4 flex flex-row justify-end gap-6">
+                            <span className="text-sm font-semibold">
+                                Total Bar :
+                                {formatRupiah(cashOutData.reduce((sum, record) => (record.kategori === 'Bar' ? sum + record.amount : sum), 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total Kitchen :
+                                {formatRupiah(cashOutData.reduce((sum, record) => (record.kategori === 'Kitchen' ? sum + record.amount : sum), 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total Operasional :
+                                {formatRupiah(
+                                    cashOutData.reduce((sum, record) => (record.kategori === 'Operasional' ? sum + record.amount : sum), 0),
+                                )}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total RND :
+                                {formatRupiah(cashOutData.reduce((sum, record) => (record.kategori === 'RND' ? sum + record.amount : sum), 0))}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                Total Cash Out :{formatRupiah(cashOutData.reduce((sum, record) => sum + Number(record.amount), 0))}
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </AppLayout>
     );
