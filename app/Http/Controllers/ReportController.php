@@ -48,6 +48,7 @@ class ReportController extends Controller
                     'kategori'    => $kategori,
                     'description' => $items->pluck('description')->filter()->join("\n"), // lebih aman utk React
                     'amount'      => (float) $items->sum('amount'),
+                    'source'      => $items->source,
                 ];
             })
             ->values()
